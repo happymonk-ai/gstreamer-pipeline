@@ -53,7 +53,7 @@ static GstFlowReturn new_sample (GstAppSink *sink, CustomData *data) {
 
     /* Publishing the frames to nats */
     for (count = 0; (s == NATS_OK) && (count < 1); count++){
-        s = natsConnection_Publish(conn, subj, (const void*) info.data, info.size);
+        s = natsConnection_Publish(conn, subj, (const char*) map.data, map.size);
     }
 
     if (s == NATS_OK)
