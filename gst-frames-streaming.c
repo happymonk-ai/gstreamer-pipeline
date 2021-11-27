@@ -19,7 +19,6 @@ static GstFlowReturn new_sample (GstAppSink *sink, CustomData *data) {
   GstBuffer *buffer;
   GstBuffer *buffer_bytes;
 	GstMapInfo info;
-  GstMapInfo map;
 
   /* Nats is connected */
   const char  *subj   = "frame-topic1";
@@ -46,14 +45,11 @@ static GstFlowReturn new_sample (GstAppSink *sink, CustomData *data) {
 
     buffer = gst_sample_get_buffer(sample);
     gst_buffer_map( buffer, &info, (GstMapFlags)(GST_MAP_READ) );
-
-    buffer_bytes = gst_buffer_new_wrapped(info.data, info.size);
-    gst_buffer_map( buffer_bytes, &map, (GstMapFlags)(GST_MAP_READ) );
-    g_print("%s", map.data);
+    g_print("%s", info.data);
 
     /* Publishing the frames to nats */
     for (count = 0; (s == NATS_OK) && (count < 1); count++){
-        s = natsConnection_Publish(conn, subj, (const char*) map.data, map.size);
+        s = natsConnection_Publish(conn, subj, (const char*) info.data, info.size);
     }
 
     if (s == NATS_OK)
@@ -131,7 +127,7 @@ main (int argc, char *argv[])
   /* Build the pipeline */
   pipeline =
       gst_parse_launch
-      ("rtspsrc location=rtsp://172.26.130.124:8554/test1 latency=0 ! queue ! rtph265depay ! h265parse ! decodebin ! videoconvert ! videoscale ! video/x-raw, width=160, height=120, format=GRAY8 ! appsink name=sink" ,
+      ("rtspsrc location=rtsp://172.26.130.124:8554/test1 latency=0 ! queue ! rtph265depay ! h265parse ! decodebin ! videoconvert ! videoscale ! video/x-raw, width=512, height=512, format=GRAY8 ! appsink name=sink" ,
       NULL);
   bus = gst_element_get_bus (pipeline);
 
