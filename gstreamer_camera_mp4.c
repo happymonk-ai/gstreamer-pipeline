@@ -84,41 +84,10 @@ int main (int argc, char *argv[])
         gst_object_unref(pipeline);
         return -1;
     }
-    sleep(20);
-    g_print("************************************************************A device has been received************************************************************\n");
-    if(!add_device("gdysbshu3767", "rtsp://192.168.29.92:8564//test2"))
-    {
-        g_printerr("ERROR: Failed to add the device to the pipeline\n");
-        gst_object_unref(pipeline);
-        return -1;
-    }
-    sleep(20);
-    g_print("************************************************************A device has been received************************************************************\n");
-    if(!add_device("iippopqoiwh763", "rtsp://192.168.29.92:8554//test1"))
-    {
-        g_printerr("ERROR: Failed to add the device to the pipeline\n");
-        gst_object_unref(pipeline);
-        return -1;
-    }
+
     sleep(20);
     g_print("************************************************************A mp4 file has been received************************************************************\n");
     if(!add_mp4("pppoasgdjgew22", "/home/nivetheni/nats.c/device_stream/gstreamer/sample1.mp4"))
-    {
-        g_printerr("ERROR: Failed to add the mp4 file to the pipeline\n");
-        gst_object_unref(pipeline);
-        return -1;
-    }
-    sleep(20);
-    g_print("************************************************************A mp4 file has been received************************************************************\n");
-    if(!add_mp4("ghghs662uicns", "/home/nivetheni/nats.c/device_stream/gstreamer/sample2.mp4"))
-    {
-        g_printerr("ERROR: Failed to add the mp4 file to the pipeline\n");
-        gst_object_unref(pipeline);
-        return -1;
-    }
-    sleep(20);
-    g_print("************************************************************A mp4 file has been received************************************************************\n");
-    if(!add_mp4("qqqqodkshfw83", "/home/nivetheni/nats.c/device_stream/gstreamer/sample3.mp4"))
     {
         g_printerr("ERROR: Failed to add the mp4 file to the pipeline\n");
         gst_object_unref(pipeline);
@@ -163,6 +132,7 @@ cb_message (GstBus     *bus,
   }
 }
 
+/* we are starting the pipeline with fakesrc and fakesink to preproll early */
 static gboolean start_pipeline()
 {
     GstStateChangeReturn ret;
@@ -194,6 +164,8 @@ static gboolean start_pipeline()
       return FALSE;
 }
 
+/* Pipeline for a RTSP camera stream */
+
 static gboolean add_device(gchar *device_id, gchar *device_url)
 {
     CustomData data;
@@ -202,6 +174,7 @@ static gboolean add_device(gchar *device_id, gchar *device_url)
     gchar *bin_tmp, *depay_tmp, *parse_tmp, *tee_tmp, *app_q_tmp, *decode_tmp, *convert_tmp, *scale_tmp, *filter_tmp, *sink_tmp, *file_q_tmp, *mux_tmp, *fake_tmp;
     GstPad *tee_app_pad, *tee_file_pad, *queue_app_pad, *queue_file_pad;
     
+    /* Element names */
     bin_tmp = g_strdup_printf ("bin-%s", device_id);
     depay_tmp = g_strdup_printf ("depay-%s", device_id);
     parse_tmp = g_strdup_printf ("parse-%s", device_id);
@@ -259,12 +232,14 @@ static gboolean add_device(gchar *device_id, gchar *device_url)
     {
         g_print("Elements are linked successfully.\n");
     }
-
+    
+    /* Getting the src pad of tee */
     tee_app_pad = gst_element_get_request_pad(tee, "src_%u");
     g_print("Obtained request pad %s for appsink branch.\n", gst_pad_get_name (tee_app_pad));
     tee_file_pad = gst_element_get_request_pad(tee, "src_%u");
     g_print("Obtained request pad %s for file(fakesink) branch.\n", gst_pad_get_name (tee_file_pad));
-
+    
+    /* Linking the tee with app_queue and file_queue */
     queue_app_pad = gst_element_get_static_pad(app_queue, "sink");
     queue_file_pad = gst_element_get_static_pad(file_queue, "sink");
 
@@ -286,7 +261,8 @@ static gboolean add_device(gchar *device_id, gchar *device_url)
 
     gst_bin_add(GST_BIN(pipeline), bin);
     g_free (bin_tmp);
-
+    
+    /* Setting the desired caps for the frames */
     GstCaps *filtercaps = gst_caps_new_simple("video/x-raw",
                                               "format", G_TYPE_STRING, "GRAY8",
                                               "width", G_TYPE_INT, 512,
@@ -559,6 +535,26 @@ static GstFlowReturn new_sample(GstAppSink *sink, CustomData *data)
 
     if (sample)
     {
+        /* Fetching the caps from the sample */
+        caps = gst_sample_get_caps (sample);
+        if (!caps) {
+            g_print ("could not get snapshot format\n");
+            exit (-1);
+        }
+
+        str = gst_caps_get_structure (caps, 0);
+
+        /* we need to get the final caps on the buffer to get the size */
+        res = gst_structure_get_int (str, "width", &width);
+        res |= gst_structure_get_int (str, "height", &height);
+        if (!res) {
+            g_print ("could not get snapshot dimension\n");
+            exit (-1);
+        }
+        else {
+            g_print("HEIGHT : %d\n", height);
+            g_print("WIDTH : %d\n", width);
+        }
 
         buffer = gst_sample_get_buffer(sample);
         if (gst_buffer_map(buffer, &info, (GstMapFlags)(GST_MAP_READ)))
