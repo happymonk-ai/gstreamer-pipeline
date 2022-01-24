@@ -310,6 +310,7 @@ static gboolean add_device(gchar *device_id, gchar *device_url)
 
 }
 
+/* Pipeline for a Mp4 file */
 static gboolean add_mp4(gchar *device_id, gchar *location)
 {
 
