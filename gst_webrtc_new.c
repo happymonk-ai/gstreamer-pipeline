@@ -906,7 +906,8 @@ static gboolean create_pipeline(CustomData *data)
     GstStateChangeReturn ret;
     GError *error = NULL;
     gchar *sink_tmp, *gst_string;
-
+  
+    //Fetching the last character from the peerid and assigning it as the index to the array object
     int integer = (int) strtol ( data->peerid, NULL, 10 );
 
     sink_tmp = g_strdup_printf ("sink-%s", data->id);
