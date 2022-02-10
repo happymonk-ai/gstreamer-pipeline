@@ -1,4 +1,4 @@
-// gcc gst_webrtc_sol.c -o gst_webrtc_sol `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats gstreamer-webrtc-1.0 gstreamer-sdp-1.0 libsoup-2.4 json-glib-1.0`
+// gcc gst_webrtc_sp_sol.c -o gst_webrtc_sp_sol `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats gstreamer-webrtc-1.0 gstreamer-sdp-1.0 libsoup-2.4 json-glib-1.0`
 
 #include <gst/gst.h>
 #include <gst/sdp/sdp.h>
