@@ -1,10 +1,10 @@
+// gcc rtsp_server.c -o rtsp_server `pkg-config --cflags --libs gstreamer-1.0 libnats gstreamer-rtsp-server-1.0`
+
 #include <gst/gst.h>
-#include <gst/rtsp-server/rtsp-media.h>
 #include <gst/rtsp-server/rtsp-server.h>
-#include <gst/rtsp-server/rtsp-media-factory-uri.h>
 #include "/home/nivetheni/nats.c/examples/examples.h"
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <zconf.h>
