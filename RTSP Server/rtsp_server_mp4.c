@@ -25,12 +25,12 @@ struct pair
 };
 
 struct pair pairs[50] = {
-	{"/stream1", "/home/wajoud/yolov5/sample_videos/traffic.mp4", "8090", "haKDBkjhadlk"},
-	{"/stream2", "/home/wajoud/yolov5/Trespass_People17.mp4", "8090", "ioalkjNmahnKL"},
-	{"/stream3", "/home/wajoud/yolov5/society_entrance.mp4", "8090", "ooasasjbjabdhua"},
-	{"/stream4", "/home/wajoud/yolov5/Trespass People_6.mp4", "8090", "rrtarsytahgbj"},
-	{"/stream5", "/home/wajoud/yolov5/Robbery.mp4", "8090", "bbsnabsagaae"},
-	{"/stream6", "/home/wajoud/yolov5/railway_station.mp4", "8090", "xccxheqoiueo"}};
+	{"stream1", "/home/wajoud/yolov5/sample_videos/traffic.mp4", "8090", "haKDBkjhadlk"},
+	{"stream2", "/home/wajoud/yolov5/Trespass_People17.mp4", "8090", "ioalkjNmahnKL"},
+	{"stream3", "/home/wajoud/yolov5/society_entrance.mp4", "8090", "ooasasjbjabdhua"},
+	{"stream4", "/home/wajoud/yolov5/Trespass People_6.mp4", "8090", "rrtarsytahgbj"},
+	{"stream5", "/home/wajoud/yolov5/Robbery.mp4", "8090", "bbsnabsagaae"},
+	{"stream6", "/home/wajoud/yolov5/railway_station.mp4", "8090", "xccxheqoiueo"}};
 
 
 static gboolean
