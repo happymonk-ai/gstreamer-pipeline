@@ -23,7 +23,8 @@ struct pair
 	char *str2;
 };
 
-struct pair pairs[5] = {
+// increase the array size to add more urls
+struct pair pairs[2] = {
 	{"/home/nivetheni/nats.c/device_stream/video23.mp4", "haKDBkjhadlk"},
 	{"/home/nivetheni/nats.c/device_stream/test_video.mp4", "ioalkjNmahnKL"}};
 
@@ -76,7 +77,8 @@ int main (int argc, char *argv[])
     gst_bus_add_signal_watch (bus);
     g_signal_connect (bus, "message", (GCallback) cb_message,
       pipeline);
-
+	
+    //increase the interation accordingly to add more videos	
     for (int i = 0; i < 2; i++)
     {
       args->url = pairs[i].str1;
