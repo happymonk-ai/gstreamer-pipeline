@@ -8,6 +8,8 @@
 #include <pthread.h>
 #include <zconf.h>
 
+#define PORT "8090"
+
 struct arg_struct
 {
   char *deviceid;
@@ -25,12 +27,17 @@ struct pair
 };
 
 struct pair pairs[50] = {
-	{"stream1", "/home/wajoud/yolov5/sample_videos/traffic.mp4", "8090", "haKDBkjhadlk"},
-	{"stream2", "/home/wajoud/yolov5/Trespass_People17.mp4", "8090", "ioalkjNmahnKL"},
-	{"stream3", "/home/wajoud/yolov5/society_entrance.mp4", "8090", "ooasasjbjabdhua"},
-	{"stream4", "/home/wajoud/yolov5/Trespass People_6.mp4", "8090", "rrtarsytahgbj"},
-	{"stream5", "/home/wajoud/yolov5/Robbery.mp4", "8090", "bbsnabsagaae"},
-	{"stream6", "/home/wajoud/yolov5/railway_station.mp4", "8090", "xccxheqoiueo"}};
+	{"/stream1", "/home/wajoud/yolov5/sample_videos/traffic.mp4", "haKDBkjhadlk"},
+	{"/stream2", "/home/wajoud/yolov5/Trespass_People17.mp4", "ioalkjNmahnKL"},
+	{"/stream3", "/home/wajoud/yolov5/society_entrance.mp4", "ooasasjbjabdhua"},
+	{"/stream4", "/home/wajoud/yolov5/Trespass People_6.mp4", "rrtarsytahgbj"},
+	{"/stream5", "/home/wajoud/yolov5/Robbery.mp4", "bbsnabsagaae"},
+	{"/stream6", "/home/wajoud/yolov5/railway_station.mp4", "xccxheqoiueo"}};
+
+GMainLoop *loop;
+static GstRTSPServer *server;
+static GstRTSPMountPoints *mounts;
+static GstRTSPMediaFactory *factory;
 
 
 static gboolean
@@ -122,28 +129,11 @@ media_configure_cb (GstRTSPMediaFactory * factory, GstRTSPMedia * media)
   g_signal_connect (media, "prepared", (GCallback) media_prepared_cb, factory);
 }
 
-void *server_function(void *arguments)
+static gboolean server_function(char *endpt, char *device_url, char *device_id, GstRTSPServer *server)
 {
-
-  GMainLoop *loop;
-
-  static GstRTSPServer *server;
-  static GstRTSPMountPoints *mounts;
-  static GstRTSPMediaFactory *factory;
-
-  struct arg_struct *args = (struct arg_struct *)arguments;
-  char *device_id = args->deviceid;
-  char *device_url = args->url;
-  char *port = args->port;
-  char *endpt = args->endpoint;
-
-  loop = g_main_loop_new (NULL, FALSE);
 
   g_print("Starting RTSP Server Streaming for device id: %s\n", device_id);
 
-  /* create a server instance */
-  server = gst_rtsp_server_new ();
-  g_object_set(server, "service", port, NULL);
   /* get the mount points for this server, every server has a default object
    * that be used to map uri mount points to media factories */
   mounts = gst_rtsp_server_get_mount_points (server);
@@ -152,12 +142,9 @@ void *server_function(void *arguments)
    * gst-launch syntax to create pipelines. 
    * any launch line works as long as it contains elements named pay%d. Each
    * element with pay%d names will be a stream */
-  gchar *gst_string, *src_tmp, *dem_tmp, *dec_tmp, *enc_tmp;
+  gchar *gst_string;
 
-  src_tmp = g_strdup_printf ("src-%s", device_id);
-  dem_tmp = g_strdup_printf ("dem-%s", device_id);
-
-  gst_string = g_strdup_printf("(filesrc location=%s name=%s ! qtdemux name=%s %s. ! queue ! rtph264pay pt=96 name=pay0 %s. ! queue ! rtpmp4apay pt=97 name=pay1 )", device_url, src_tmp, dem_tmp, dem_tmp, dem_tmp);
+  gst_string = g_strdup_printf("(filesrc location=%s name=src-%s ! qtdemux name=dem-%s dem-%s. ! queue ! rtph264pay pt=96 name=pay0 dem-%s. ! queue ! rtpmp4apay pt=97 name=pay1 )", device_url, device_id, device_id, device_id, device_id);
   factory = gst_rtsp_media_factory_new ();
   gst_rtsp_media_factory_set_launch (factory, gst_string);
 
@@ -176,40 +163,37 @@ void *server_function(void *arguments)
   gst_rtsp_server_attach (server, NULL);
 
   /* start serving */
-  g_print("stream ready at rtsp://216.48.189.5:%s/%s\n", port, endpt);
-  g_main_loop_run (loop);
+  g_print("stream ready at rtsp://216.48.189.5:%s/%s\n", PORT, endpt);
 
-  g_free(src_tmp);
-  g_free(dem_tmp);
   g_free(gst_string);
+	
+  return TRUE;
 }
 
 int main(int argc, gchar *argv[])
 {
 	gst_init(&argc, &argv);
-
-	pthread_t thread[50];
-	int err;
+	
 	struct arg_struct *args = malloc(sizeof(struct arg_struct));
+
+	loop = g_main_loop_new (NULL, FALSE);
+
+        /* create a server instance */
+	server = gst_rtsp_server_new ();
+	g_object_set(server, "service", PORT, NULL);
+
 
 	for (int i = 0; i < 6; i++)
 	{
 		args->endpoint = pairs[i].str1;
 		args->url = pairs[i].str2;
-		args->port = pairs[i].str3;
-		args->deviceid = pairs[i].str4;
+		args->deviceid = pairs[i].str3;
 
-		err = pthread_create(&thread[i], NULL, server_function, args);
-
-		if (err)
-		{
-			printf("An error occured: %d\n", err);
-			return 1;
+		if (!server_function(args->endpoint, args->url, args->deviceid, server)){
+			g_printerr("Cannot add the stream\n");
 		}
-		sleep(3);
 	}
-
-	pthread_exit(0);
-
-    return 0;
+	g_main_loop_run (loop);
+	
+	return 0;
 }
