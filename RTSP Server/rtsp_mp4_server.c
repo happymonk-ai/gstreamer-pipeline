@@ -960,10 +960,10 @@ int main(int argc, gchar *argv[])
 
   g_object_set(server, "service", PORT, NULL);
 
-  for (int i = 1; i <= 55; i++)
+  for (int i = 1; i <= 100; i++)
   {
     endpt = g_strdup_printf("/stream%d", i);
-    location = g_strdup_printf("/home/nivetheni/1080p_videos/%d.mp4", i);
+    location = g_strdup_printf("/home/avishek/sample_videos/1080p_videos/%d.mp4", i);
     device_id = mkrndstr(20);
 
     if (!server_function(endpt, location, device_id))
