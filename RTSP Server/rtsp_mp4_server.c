@@ -915,7 +915,7 @@ static gboolean server_function(char *endpt, char *device_url, char *device_id)
   gst_rtsp_server_attach(server, NULL);
 
   /* start serving */
-  g_print("stream ready at rtsp://127.0.0.1:%s/%s\n", PORT, endpt);
+  g_print("stream ready at rtsp://216.48.189.5:%s/%s\n", PORT, endpt);
 
   return TRUE;
 }
