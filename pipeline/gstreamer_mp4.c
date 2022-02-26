@@ -16,14 +16,6 @@ static GstElement *pipe1, *app_sink;
 
 static char *nats_url = "nats://164.52.213.244:4222";
 
-/* Structure to contain all our information, so we can pass it to callbacks */
-typedef struct _CustomData
-{
-    gchar *file_id;
-    gchar *file_url;
-    
-} CustomData;
-
 static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
 {
     GstSample *sample;
@@ -269,7 +261,7 @@ int main(int argc, char *argv[])
     // increase the interation accordingly to add more videos
     for (int i = 1; i <= 100; i++)
     {
-        location = g_strdup_printf("/home/nivetheni/1080p_videos/%d.mp4", i);
+        location = g_strdup_printf("/home/avishek/sample_videos/1080p_videos/%d.mp4", i);
         id = g_strdup_printf("stream%d", i);
 
         if (!add_mp4(location, id))
