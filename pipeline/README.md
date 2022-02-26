@@ -14,4 +14,4 @@ TO COMPILE:<br>
 gcc gstreamer_mp4.c -o gstreamer_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c`<br><br>
 
 TO RUN :<br>
-GST_DEBUG="GST_TRACER:7" GST_TRACERS="stats;rusage;log;latency;leaks" GST_DEBUG_FILE=trace.log ./gstreamer_mp4
+./gstreamer_mp4
