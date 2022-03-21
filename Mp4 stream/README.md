@@ -7,7 +7,7 @@ TO INSTALL NATS:<br>
 https://github.com/nats-io/nats.c<br><br>
 
 TO COMPILE THE CODE:<br>
-gcc gstreamer_mp4.c -o gstreamer_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats`<br><br>
+gcc js_mp4.c -o js_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c`<br><br>
 
 TO RUN THE CODE:<br>
 ./gstreamer_mp4<br><br>
