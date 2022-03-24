@@ -11,7 +11,7 @@ TO INSTALL JSON-C:<br>
 https://lynxbee.com/how-to-compile-json-c-json-implementation-in-c/<br><br>
 
 TO COMPILE:<br>
-gcc gstreamer_mp4.c -o gstreamer_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c`<br><br>
+gcc js_mp4.c -o js_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c`<br><br>
 
 TO RUN :<br>
-./gstreamer_mp4
+./js_mp4
