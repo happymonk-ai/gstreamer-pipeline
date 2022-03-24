@@ -35,15 +35,6 @@ _jsPubErr(jsCtx *js, jsPubAckErr *pae, void *closure)
     printf("Original message: %.*s\n", natsMsg_GetDataLength(pae->Msg), natsMsg_GetData(pae->Msg));
 
     *errors = (*errors + 1);
-
-    // If we wanted to resend the original message, we would do something like that:
-    //
-    // js_PublishMsgAsync(js, &(pae->Msg), NULL);
-    //
-    // Note that we use `&(pae->Msg)` so that the library set it to NULL if it takes
-    // ownership, and the library will not destroy the message when this callback returns.
-
-    // No need to destroy anything, everything is handled by the library.
 }
 
 static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
@@ -95,15 +86,6 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
             jsPubOpts.MaxWait = 1000000000;
             s = js_PublishAsyncComplete(js, &jsPubOpts);
             printf("published async\n");
-            // if (s == NATS_TIMEOUT)
-            // {
-            //     // Let's get the list of pending messages. We could resend,
-            //     // etc, but for now, just destroy them.
-            //     natsMsgList list;
-
-            //     js_PublishAsyncGetPendingList(&list, js);
-            //     natsMsgList_Destroy(&list);
-            // }
         }
 
         if (s == NATS_OK)
@@ -229,33 +211,6 @@ cb_message(GstBus *bus,
     default:
         break;
     }
-}
-
-static char *mkrndstr(size_t length)
-{
-
-    static char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-#'?!";
-    char *randomString;
-
-    if (length)
-    {
-        randomString = malloc(length + 1);
-
-        if (randomString)
-        {
-            int l = (int)(sizeof(charset) - 1);
-            int key;
-            for (int n = 0; n < length; n++)
-            {
-                key = rand() % l;
-                randomString[n] = charset[key];
-            }
-
-            randomString[length] = '\0';
-        }
-    }
-
-    return randomString;
 }
 
 int main(int argc, char *argv[])
