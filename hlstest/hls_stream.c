@@ -21,9 +21,6 @@ static gboolean hls_function()
   /* Build the pipeline */
   pipeline = gst_parse_launch("rtspsrc location=rtsp://216.48.189.5:8090//stream5 ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! mpegtsmux ! hlssink location=segment.%05d.ts target-duration=5 max-files=5", &error);
 
-  /* Start playing */
-  gst_element_set_state(pipeline, GST_STATE_PLAYING);
-
   if (error)
   {
     g_printerr("Failed to parse launch: %s\n", error->message);
