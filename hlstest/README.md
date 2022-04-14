@@ -3,8 +3,15 @@ https://lifestyletransfer.com/how-to-install-gstreamer-on-ubuntu/<br>
 (or)<br>
 https://gstreamer.freedesktop.org/documentation/installing/index.html?gi-language=c<br>
 
-FOR COMPILATION:<br>
+COMPILATION OF SINGLE STREAM:<br>
 gcc hls_stream.c -o hls_stream `pkg-config --cflags --libs gstreamer-1.0`
 
-TO RUN:<br>
+COMPILATION OF MULTI STREAM:<br>
+gcc hls_multi_stream.c -o hls_multi_stream `pkg-config --cflags --libs gstreamer-1.0`
+
+TO RUN SINGLE STREAM:<br>
 ./hls_stream
+
+
+TO RUN MULTI STREAM:<br>
+./hls_multi_stream
