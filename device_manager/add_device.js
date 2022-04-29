@@ -16,8 +16,8 @@ async function mp4_pub() {
         let jstr = JSON.stringify(jobj)
         console.log("Publishing to topic device.new")
         console.log((jstr))
-        nc.publish("device.new", Buffer.from(jstr));
-        jobj.stream_endpt = "/camera" + i
+        // nc.publish("device.new", Buffer.from(jstr));
+        jobj.stream_endpt = "/stream" + i
         let jstr1 = JSON.stringify(jobj)
         console.log((jstr1))
         nc.publish("device.add.stream", Buffer.from(jstr1));
@@ -79,5 +79,5 @@ async function device_pub() {
     });
 }
 
-// mp4_pub()
-device_pub()
+mp4_pub()
+// device_pub()
