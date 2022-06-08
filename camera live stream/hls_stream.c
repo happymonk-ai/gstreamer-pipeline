@@ -138,6 +138,10 @@ cb_message(GstBus *bus,
 int main(int argc, gchar *argv[])
 {
   gst_init(&argc, &argv);
+  
+  char *val = getenv("HLS_LIMIT");
+
+  int x = atoi(val);
 
   char *file_path, *file_url, *file_name;
 
@@ -154,7 +158,7 @@ int main(int argc, gchar *argv[])
   g_signal_connect(bus, "message", (GCallback)cb_message,
                    pipeline);
 
-  for (int i = 1; i <= 3; i++)
+  for (int i = 1; i <= x; i++)
   {
     file_path = g_strdup_printf("/home/nivetheni/hlstest/stream%d", i); //"/home/nivetheni/hlstest" - change the location path
     mkdir(file_path, 0777);
