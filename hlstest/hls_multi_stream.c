@@ -159,7 +159,7 @@ int main(int argc, gchar *argv[])
     file_path = g_strdup_printf("/app/streams/stream%d", i);
     mkdir(file_path, 0777);
     file_url = g_strdup_printf("rtsp://216.48.189.5:8090//stream%d", i);
-    file_name = g_strdup_printf("playlist%d", i);
+    file_name = g_strdup_printf("%d", i);
 
     if (!hls_function(file_path, file_url, file_name))
     {
