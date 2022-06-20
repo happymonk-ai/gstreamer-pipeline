@@ -48,8 +48,8 @@ volatile int errors = 0;
 
 static natsStatistics *stats = NULL;
 
-const char *stream1 = "sample-stream500";
-const char *subject1 = "mp4.*.device";
+const char *stream1 = "device_stream";
+const char *subject1 = "stream.*.frame";
 
 struct arg_struct
 {
@@ -1135,7 +1135,7 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
 
     id = json_object_to_json_string(video_id);
 
-    gchar *subj1 = g_strdup_printf("mp4.%s.device", id);
+    gchar *subj1 = g_strdup_printf("stream.%s.frame", id);
 
     printf("Sending messages to subject '%s'\n", subj1);
 
