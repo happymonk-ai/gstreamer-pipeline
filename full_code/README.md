@@ -8,7 +8,6 @@ FOR HLS STREAMING<br>
 The 'main.js' is for starting a http server, to expose the files generated in hls streams
 
 TO INSTALL GSTREAMER NECESSARY PACKAGE:<br><br>
-
 https://gstreamer.freedesktop.org/documentation/installing/index.html?gi-language=c<br><br>
 
 TO INSTALL THE RTSP SERVER PACKAGE:<br><br>
