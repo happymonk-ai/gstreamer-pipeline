@@ -1,4 +1,4 @@
-// gcc rtsp_server_mp4.c -o rtsp_server_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-rtsp-server-1.0`
+// gcc mp4_server.c -o mp4_server `pkg-config --cflags --libs gstreamer-1.0 gstreamer-rtsp-server-1.0`
 
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
