@@ -1,4 +1,4 @@
-// gcc js_mp4.c -o js_mp4 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c`
+// gcc mp4_frames.c -o mp4_frames `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c`
 
 #include <gst/gst.h>
 #include "/home/nivetheni/nats.c/examples/examples.h"
