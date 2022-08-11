@@ -1,11 +1,11 @@
 version: '3.7'
 services:
-  hlstest:
+  hlstreamer:
     build:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    command: ./hls_stream
+    command: ./full_pipeline
     ports:
       - "8060:8060"
         # volumes:
