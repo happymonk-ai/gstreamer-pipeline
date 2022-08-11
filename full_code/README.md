@@ -4,9 +4,6 @@ gcc full_pipeline.c -o full_pipeline -lgstnet-1.0 `pkg-config --cflags --libs gs
 TO RUN:<br>
 ./full_pipeline<br><br>
 
-FOR HLS STREAMING<br>
-The 'main.js' is for starting a http server, to expose the files generated in hls streams
-
 TO INSTALL GSTREAMER NECESSARY PACKAGE:<br><br>
 https://gstreamer.freedesktop.org/documentation/installing/index.html?gi-language=c<br><br>
 
