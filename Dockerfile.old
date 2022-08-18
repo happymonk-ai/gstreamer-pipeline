@@ -1,0 +1,62 @@
+FROM ubuntu:22.04
+RUN mkdir /app
+WORKDIR /app
+COPY ./full_code .
+RUN apt-get update && apt-get install -y apt-utils && apt-get install -y tzdata && apt-get install -y wget
+## installing gstreamer necessary packages
+RUN apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+## Installing cmake
+#RUN apt-get install -y build-essential openssl libssl-dev
+#RUN wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0.tar.gz && tar -zxvf cmake-3.20.0.tar.gz && cd cmake-3.20.0 && ./bootstrap && make && make install
+## Installing RTSP server packages
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    #vim \
+    #git \
+    #gcc \
+    #clang
+
+    build-essential \
+    pkg-config \
+    libgstrtspserver-1.0-dev \
+    gstreamer1.0-rtsp \
+    vim \
+    git \
+    cmake \
+    gcc \
+    clang
+#RUN apt-get install -y libgstrtspserver-1.0-dev gstreamer1.0-rtsp
+#RUN git clone git://anongit.freedesktop.org/gstreamer/gst-rtsp-server && cd gst-rtsp-server && git checkout remotes/origin/1.8 && ./autogen.sh --noconfigure && GST_PLUGINS_GOOD_DIR=$(pkg-config --variable=pluginsdir gstreamer-plugins-bad-1.0) ./configure && make
+#ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/app/gst-rtsp-server/pkgconfig"
+##Installing CMAKE latest
+#RUN curl -O https://apt.kitware.com/keys/kitware-archive-latest.asc && ls .
+#RUN apt-key add kitware-archive-latest.asc && apt update && apt install -y software-properties-common
+#RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main' && apt-get update
+#RUN apt install -y cmake && apt install -y cmake-curses-gui
+## Installing protobuf
+#RUN apt install -y apt-transport-https curl gnupg
+#RUN curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor >bazel-archive-keyring.gpg
+#RUN mv bazel-archive-keyring.gpg /usr/share/keyrings
+#RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list
+#RUN apt update && apt-get install g++ bazel && git clone https://github.com/protocolbuffers/protobuf.git && cd protobuf && git submodule update --init --recursive && bazel build :protoc :protobuf && cp bazel-bin/protoc /usr/local/bin && cd .. && apt install -y protobuf-compiler
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v21.5/protobuf-cpp-3.21.5.tar.gz && tar -xvzf protobuf-cpp-3.21.5.tar.gz && cd protobuf-cpp-3.21.5 && ./autogen.sh && ./configure && make && make install
+## Installing protobuf-c
+#RUN apt -y install debhelper-compat libprotobuf-dev libprotoc-dev libprotobuf-c-dev pkg-config protobuf-compiler
+RUN apt install -y autotools-dev autoconf automake libtool && git clone https://github.com/protobuf-c/protobuf-c.git && cd protobuf-c && ./autogen.sh && ./configure && make && make install && cd ..
+## Installing NATS 
+RUN ls /usr/bin/
+RUN apt-get install -y libssl-dev locate && git clone https://github.com/nats-io/nats.c.git && cd nats.c && cmake . && make install && cd ..
+#RUN apt-get install -y zip unzip tar build-essential pkg-config wget && wget -O vcpkg.tar.gz https://github.com/microsoft/vcpkg/archive/master.tar.gz && mkdir /opt/vcpkg && tar xf vcpkg.tar.gz --strip-components=1 -C /opt/vcpkg && /opt/vcpkg/bootstrap-vcpkg.sh && ln -s /opt/vcpkg/vcpkg /usr/local/bin/vcpkg && vcpkg version && vcpkg install cnats
+#ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/opt/vcpkg/packages/cnats_x64-linux/lib/pkgconfig"
+#RUN git clone https://github.com/nats-io/nats.c.git
+#ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/app/nats.c/build/lib/pkgconfig"
+## Installing json-c
+#RUN apt install libjson-c-dev
+RUN git clone https://github.com/json-c/json-c.git && cd json-c && git branch -r && git checkout -b json-c-0.14 origin/json-c-0.14 && mkdir build && cmake -DCMAKE_INSTALL_PREFIX=build . && make all test install && cd ..
+ENV PKG_CONFIG_PATH="${PKG_CONFIG_PATH}:/app/json-c/build/lib/pkgconfig"
+## Compiling rtsp_server.c ##
+RUN pkg-config --variable pc_path pkg-config
+RUN gcc full_pipeline.c -o full_pipeline -lgstnet-1.0 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats`
+CMD ['./full_pipeline']
+#############################
+EXPOSE 8554
+

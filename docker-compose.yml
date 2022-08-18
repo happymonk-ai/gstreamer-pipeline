@@ -1,12 +1,13 @@
-version: '3.7'
+version: '3.3'
 services:
-  hlstest:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    command: ./hls_stream
-    ports:
-      - "8060:8060"
-        # volumes:
-            # - .:/app
+   hlstream:
+      build: .
+      restart: unless-stopped
+      command: ./full_code/full_pipeline
+      ports:
+         - '8554:8554'
+      volumes:
+         - streams_data:/app/Videos
+
+volumes:
+  streams_data:

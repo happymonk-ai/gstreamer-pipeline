@@ -7,7 +7,7 @@
 #include <gst/net/gstnettimeprovider.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "/home/nivetheni/nats.c/examples/examples.h"
+#include "/app/nats.c/examples/examples.h"
 #include <gst/net/gstnet.h>
 #include <json.h>
 #include <string.h>
@@ -1030,7 +1030,7 @@ static GstFlowReturn eos_sample(GstAppSink *sink, gpointer data)
 
     strcpy(new_id_1, id_1);
 
-    file_loc = g_strdup_printf("/home/nivetheni/1080p_videos/army/army%s.mp4", new_id_1);
+    file_loc = g_strdup_printf("/app/Videos/%s.mp4", new_id_1);
 
     g_printerr("********************The device-%s has reached EOS********************\n", new_id_1);
 
@@ -1490,7 +1490,7 @@ static gboolean video_server(char *device_url, char *device_id, struct json_obje
     }
 
     /*create path for storing hls streams*/
-    file_path = g_strdup_printf("/home/nivetheni/nats.c/device_stream/gstreamer/streams/%s", endpt);
+    file_path = g_strdup_printf("/app/streams/%s", device_id);
     mkdir(file_path, 0777);
 
     /*add the stream to HLS server*/
@@ -1763,7 +1763,7 @@ int main(int argc, gchar *argv[])
     // }
     for (int i = 1; i <= 5; i++)
     {
-        char *new_path = g_strdup_printf("/home/nivetheni/1080p_videos/army/army%d.mp4", i);
+        char *new_path = g_strdup_printf("/app/Videos/%d.mp4", i);
         char *new_id = g_strdup_printf("%d", i);
         char *new_endpt = g_strdup_printf("/video%d", i);
 
