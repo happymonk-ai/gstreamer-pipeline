@@ -31,7 +31,7 @@ RUN cd ./nats.c/build/ && cmake .. && make install
 #############################
 ## setup json-c ##
 #RUN git clone https://github.com/json-c/json-c.git
-RUN cd json-c && git branch -r && git checkout -b json-c-0.14 origin/json-c-0.14 && mkdir build && cmake -DCMAKE_INSTALL_PREFIX=build . && make all test install
+RUN cd json-c &&  mkdir build && cmake -DCMAKE_INSTALL_PREFIX=build . && make all test install
 RUN cp /app/json-c/build/lib/pkgconfig/json-c.pc /usr/local/lib/pkgconfig/
 RUN ln -s /app/json-c/build/lib/libjson-c.so /usr/local/lib/libjson-c.so.5
 #RUN gcc js_mp4.c -o  js_mp4 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c)

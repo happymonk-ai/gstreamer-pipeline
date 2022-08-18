@@ -1,8 +1,9 @@
+#include "strerror_override.h"
+#include "strerror_override_private.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
 #include <assert.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -59,7 +60,7 @@ static const char *rec_input_json_str =
 /* clang-format on */
 
 /* Example from RFC */
-static void test_example_get(void)
+static void test_example_get()
 {
 	int i;
 	struct json_object *jo1, *jo2, *jo3;
@@ -124,8 +125,8 @@ static void test_example_get(void)
 	json_object_put(jo1);
 }
 
-/* I'm not too happy with the RFC example to test the recursion of the json_pointer_get() function */
-static void test_recursion_get(void)
+/* I'm not too happy with the RFC example to test the recusion of the json_pointer_get() function */
+static void test_recursion_get()
 {
 	struct json_object *jo2, *jo1 = json_tokener_parse(rec_input_json_str);
 
@@ -160,7 +161,7 @@ static void test_recursion_get(void)
 	json_object_put(jo1);
 }
 
-static void test_wrong_inputs_get(void)
+static void test_wrong_inputs_get()
 {
 	struct json_object *jo2, *jo1 = json_tokener_parse(input_json_str);
 
@@ -230,7 +231,7 @@ static void test_wrong_inputs_get(void)
 	json_object_put(jo1);
 }
 
-static void test_example_set(void)
+static void test_example_set()
 {
 	struct json_object *jo2, *jo1 = json_tokener_parse(input_json_str);
 
@@ -271,7 +272,7 @@ static void test_example_set(void)
 	json_object_put(jo1);
 }
 
-static void test_wrong_inputs_set(void)
+static void test_wrong_inputs_set()
 {
 	struct json_object *jo2, *jo1 = json_tokener_parse(input_json_str);
 
@@ -319,6 +320,8 @@ static void test_wrong_inputs_set(void)
 
 int main(int argc, char **argv)
 {
+	_json_c_strerror_enable = 1;
+
 	test_example_get();
 	test_recursion_get();
 	test_wrong_inputs_get();

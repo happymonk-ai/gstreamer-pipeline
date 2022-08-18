@@ -20,9 +20,7 @@ static struct
 	ENTRY(EIO),
 	ENTRY(ENXIO),
 	ENTRY(E2BIG),
-#ifdef ENOEXEC
 	ENTRY(ENOEXEC),
-#endif
 	ENTRY(EBADF),
 	ENTRY(ECHILD),
 	ENTRY(EDEADLK),
@@ -59,8 +57,7 @@ static struct
 /* clang-format on */
 
 // Enabled during tests
-static int _json_c_strerror_enable = 0;
-extern char *getenv(const char *name); // Avoid including stdlib.h
+int _json_c_strerror_enable = 0;
 
 #define PREFIX "ERRNO="
 static char errno_buf[128] = PREFIX;
@@ -71,8 +68,6 @@ char *_json_c_strerror(int errno_in)
 	int ii, jj;
 
 	if (!_json_c_strerror_enable)
-		_json_c_strerror_enable = (getenv("_JSON_C_STRERROR_ENABLE") == NULL) ? -1 : 1;
-	if (_json_c_strerror_enable == -1)
 		return strerror(errno_in);
 
 	// Avoid standard functions, so we don't need to include any
@@ -94,7 +89,7 @@ char *_json_c_strerror(int errno_in)
 	}
 
 	// It's not one of the known errno values, return the numeric value.
-	for (ii = 0; errno_in >= 10; errno_in /= 10, ii++)
+	for (ii = 0; errno_in > 10; errno_in /= 10, ii++)
 	{
 		digbuf[ii] = "0123456789"[(errno_in % 10)];
 	}
@@ -105,6 +100,5 @@ char *_json_c_strerror(int errno_in)
 	{
 		errno_buf[start_idx] = digbuf[ii];
 	}
-	errno_buf[start_idx] = '\0';
 	return errno_buf;
 }
