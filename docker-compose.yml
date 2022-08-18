@@ -1,15 +1,13 @@
-version: '3.7'
+version: '3.3'
 services:
-   hlstreamer:
-      build:
-         context: .
-         dockerfile: Dockerfile
+   hlstream:
+      build: .
       restart: unless-stopped
-      command: ./full_pipeline
+      command: ./full_code/full_pipeline
       ports:
-         - '8060:8060'
+         - '8554:8554'
       volumes:
-         - stream_data:/data
+         - streams_data:/app/Videos
 
 volumes:
-   stream_data:
+  streams_data:
