@@ -6,7 +6,7 @@
 #include <gst/net/gstnettimeprovider.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "/home/nivetheni/nats.c/examples/examples.h"
+#include "/app/nats.c/examples/examples.h"
 #include <gst/net/gstnet.h>
 #include <json.h>
 #include <string.h>
