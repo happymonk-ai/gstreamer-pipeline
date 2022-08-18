@@ -35,7 +35,7 @@ RUN cd json-c && git branch -r && git checkout -b json-c-0.14 origin/json-c-0.14
 RUN cp /app/json-c/build/lib/pkgconfig/json-c.pc /usr/local/lib/pkgconfig/
 RUN ln -s /app/json-c/build/lib/libjson-c.so /usr/local/lib/libjson-c.so.5
 #RUN gcc js_mp4.c -o  js_mp4 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c)
-RUN cd full_code && gcc full_pipeline.c -o full_pipeline -lgstnet-1.0 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats)
+RUN cd full_code && gcc full_pipeline_camera.c -o full_pipeline -lgstnet-1.0 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats)
 #RUN cd full_code && ls .
 
 #CMD [ "./full_pipeline" ]
