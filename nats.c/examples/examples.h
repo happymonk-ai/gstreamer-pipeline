@@ -14,7 +14,7 @@
 #ifndef EXAMPLES_H_
 #define EXAMPLES_H_
 
-#include <nats.h>
+#include </app/nats.c/src/nats.h>
 #include <stdio.h>
 #include <string.h>
 
