@@ -2,6 +2,7 @@ version: '3.3'
 services:
    hlstream:
       build: .
+      image: hlstream
       restart: unless-stopped
       command: ./full_code/full_pipeline
       ports:
@@ -10,4 +11,4 @@ services:
          - streams_data:/app/Videos
 
 volumes:
-  streams_data:
+   streams_data:
