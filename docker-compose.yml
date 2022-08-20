@@ -6,9 +6,15 @@ services:
       restart: unless-stopped
       command: ./full_code/full_pipeline
       ports:
-         - '8080:8554'
+         - '8554:8554'
       volumes:
          - streams_data:/app/Videos
-
+   ngnix:
+      build: ./ngnix
+      restart: unless-stopped
+      ports:
+         - '8080:80'
+      volumes:
+         - ./nginx/nginx-conf:/etc/nginx/conf.d
 volumes:
    streams_data:

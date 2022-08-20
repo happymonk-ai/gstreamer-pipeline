@@ -1,4 +1,3 @@
-// gcc full_pipeline_camera.c -o full_pipeline_camera -lgstnet-1.0 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats`
 
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
@@ -149,7 +148,7 @@ static gboolean hls_server_device(char *file_name, char *file_url, char *file_pa
 
     gchar *gst_str1, *gst_str2, *gst_str3;
 
-    gst_str1 = g_strdup_printf("rtspsrc location=%s ! queue ! rtph264depay ! h264parse ! mpegtsmux ! hlssink playlist-root=http://127.0.0.1:8080 playlist-location=%s/%s.m3u8 location=%s", file_url, file_path, file_name, file_path);
+    gst_str1 = g_strdup_printf("rtspsrc location=%s ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8554 playlist-location=%s/%s.m3u8 location=%s", file_url, file_path, file_name, file_path);
 
     gst_str2 = "/segment.%05d.ts target-duration=15  max-files=15 playlist-length=30";
 
@@ -333,45 +332,45 @@ static gboolean camera_server(char *device_url, char *device_id, struct json_obj
     const char *json_str_1;
     char *new_json_str_1;
 
-    char *endpt = g_strdup_printf("/stream%s", device_id);
+    // char *endpt = g_strdup_printf("/stream%s", device_id);
 
-    g_print("Starting RTSP Server Streaming for device id: %s\n", device_id);
+    // g_print("Starting RTSP Server Streaming for device id: %s\n", device_id);
 
-    global_clock = gst_system_clock_obtain();
-    gst_net_time_provider_new(global_clock, NULL, 8554);
+    //global_clock = gst_system_clock_obtain();
+    //gst_net_time_provider_new(global_clock, NULL, 8554);
 
-    /* get the mount points for this server, every server has a default object
-     * that be used to map uri mount points to media factories */
-    mounts = gst_rtsp_server_get_mount_points(server);
+    ///* get the mount points for this server, every server has a default object
+    // * that be used to map uri mount points to media factories */
+    //mounts = gst_rtsp_server_get_mount_points(server);
 
     /* make a media factory for a test stream. The default media factory can use
      * gst-launch syntax to create pipelines.
      * any launch line works as long as it contains elements named pay%d. Each
      * element with pay%d names will be a stream */
 
-    gchar *gst_string;
+    //gchar *gst_string;
 
-    gst_string = g_strdup_printf("(rtspsrc location=%s name=src-%s drop-on-latency=true is-live=true latency=0 ! rtpjitterbuffer drop-on-latency=true ! queue ! rtph264depay name=dep-%s ! h264parse name=parse-%s ! queue ! rtph264pay name=pay0 pt=96 )", device_url, device_id, device_id, device_id);
-    factory = gst_rtsp_media_factory_new();
-    gst_rtsp_media_factory_set_launch(factory, gst_string);
+    //gst_string = g_strdup_printf("(rtspsrc location=%s name=src-%s drop-on-latency=true is-live=true latency=0 ! rtpjitterbuffer drop-on-latency=true ! queue ! rtph264depay name=dep-%s ! h264parse name=parse-%s ! queue ! rtph264pay name=pay0 pt=96 )", device_url, device_id, device_id, device_id);
+    //factory = gst_rtsp_media_factory_new();
+    //gst_rtsp_media_factory_set_launch(factory, gst_string);
 
-    gst_rtsp_media_factory_set_shared(factory, TRUE);
-    gst_rtsp_media_factory_set_media_gtype(factory, TEST_TYPE_RTSP_MEDIA);
-    gst_rtsp_media_factory_set_clock(factory, global_clock);
+    //gst_rtsp_media_factory_set_shared(factory, TRUE);
+    //gst_rtsp_media_factory_set_media_gtype(factory, TEST_TYPE_RTSP_MEDIA);
+    //gst_rtsp_media_factory_set_clock(factory, global_clock);
 
     /* attach the test factory to the /test url */
-    gst_rtsp_mount_points_add_factory(mounts, endpt, factory);
+    //gst_rtsp_mount_points_add_factory(mounts, endpt, factory);
 
     /* don't need the ref to the mapper anymore */
-    g_object_unref(mounts);
+    //g_object_unref(mounts);
 
     /* attach the server to the default maincontext */
-    gst_rtsp_server_attach(server, NULL);
+    //gst_rtsp_server_attach(server, NULL);
 
     /* start serving */
-    g_print("stream ready at rtsp://127.0.0.1:%s/%s\n", PORT, endpt);
+    //g_print("stream ready at rtsp://127.0.0.1:%s/%s\n", PORT, endpt);
 
-    server_str_1 = g_strdup_printf("rtsp://127.0.0.1:%s/%s", PORT, endpt);
+    //server_str_1 = g_strdup_printf("rtsp://127.0.0.1:%s/%s", PORT, endpt);
 
     /* converting object to string*/
     json_str_1 = json_object_to_json_string(json_obj);
@@ -380,20 +379,20 @@ static gboolean camera_server(char *device_url, char *device_id, struct json_obj
 
     strcpy(new_json_str_1, json_str_1);
 
-    if (!add_device(device_id, server_str_1, new_json_str_1))
+    if (!add_device(device_id, device_url, new_json_str_1))
     {
-        g_printerr("Cannot add stream to Jetstream!\n");
+       g_printerr("Cannot add stream to Jetstream!\n");
     }
 
     file_path_1 = g_strdup_printf("/app/streams/stream%s", device_id);
     mkdir(file_path_1, 0777);
 
-    if (!hls_server_device(device_id, server_str_1, file_path_1))
+    if (!hls_server_device(device_id, device_url, file_path_1))
     {
         g_printerr("Cannot add stream to HLS Server!\n");
     }
 
-    g_free(gst_string);
+    //g_free(gst_string);
 
     return TRUE;
 }
@@ -587,10 +586,10 @@ int main(int argc, gchar *argv[])
     g_signal_connect(bus, "message", (GCallback)cb_message, pipe1);
 
     /* create a RTSP server instance */
-    server = gst_rtsp_server_new();
+    //server = gst_rtsp_server_new();
 
     /* assigning port */
-    g_object_set(server, "service", PORT, NULL);
+    //g_object_set(server, "service", PORT, NULL);
 
     // Creates a connection to the NATS URL
     s = natsConnection_ConnectTo(&conn, nats_url);
@@ -658,7 +657,7 @@ int main(int argc, gchar *argv[])
     //     s = natsConnection_QueueSubscribe(&sub, conn, subject, queueGroup, onMsg, (void *)&done);
     // }
 
-    for (int i = 1; i <= 7; i++)
+    for (int i = 3; i <= 3; i++)
     {
         char *new_path = g_strdup_printf("rtsp://happymonk:admin123@192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
         char *new_id = g_strdup_printf("%d", i);
