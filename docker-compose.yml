@@ -12,8 +12,8 @@ services:
       image: hlstream
       restart: unless-stopped
       command: ./full_code/full_pipeline
-      ports:
-         - '8080:8554'
+      port:
+         - '80:8554'
       depends_on:
          - ngnix
       volumes:
