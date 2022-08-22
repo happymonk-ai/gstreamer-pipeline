@@ -148,9 +148,9 @@ static gboolean hls_server_device(char *file_name, char *file_url, char *file_pa
 
     gchar *gst_str1, *gst_str2, *gst_str3;
 
-    gst_str1 = g_strdup_printf("rtspsrc location=%s ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8554 playlist-location=%s/%s.m3u8 location=%s", file_url, file_path, file_name, file_path);
+    gst_str1 = g_strdup_printf("rtspsrc location=%s ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8080 playlist-location=%s/%s.m3u8 location=%s", file_url, file_path, file_name, file_path);
 
-    gst_str2 = "/segment.%05d.ts target-duration=15  max-files=15 playlist-length=30";
+    gst_str2 = "/segment.%05d.ts target-duration=15  max-files=15 playlist-length=15";
 
     gst_str3 = (char *)malloc(1 + strlen(gst_str1) + strlen(gst_str2));
 
