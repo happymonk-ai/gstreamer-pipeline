@@ -6,17 +6,17 @@ services:
       ports:
          - '8080:80'
       volumes:
-         - ./nginx/nginx-conf:/etc/nginx/conf.d
+         - ./ngnix/ngnix-conf:/etc/ngnix/conf.d
    hlstream:
       build: .
       image: hlstream
       restart: unless-stopped
       command: ./full_code/full_pipeline
       ports:
-         - '8554:8554'
+         - '8080:8554'
       depends_on:
          - ngnix
       volumes:
-         - streams_data:/app/Videos
+         - streams_data:/app
 volumes:
    streams_data:
