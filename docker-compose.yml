@@ -1,14 +1,5 @@
 version: '3.3'
 services:
-   hlstream:
-      build: .
-      image: hlstream
-      restart: unless-stopped
-      command: ./full_code/full_pipeline
-      ports:
-         - '8554:8554'
-      volumes:
-         - streams_data:/app/Videos
    ngnix:
       build: ./ngnix
       restart: unless-stopped
@@ -16,5 +7,16 @@ services:
          - '8080:80'
       volumes:
          - ./nginx/nginx-conf:/etc/nginx/conf.d
+   hlstream:
+      build: .
+      image: hlstream
+      restart: unless-stopped
+      command: ./full_code/full_pipeline
+      ports:
+         - '8554:8554'
+      depends_on:
+         - ngnix
+      volumes:
+         - streams_data:/app/Videos
 volumes:
    streams_data:
