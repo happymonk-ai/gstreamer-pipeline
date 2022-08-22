@@ -1,22 +1,31 @@
 version: '3.3'
 services:
-   ngnix:
-      build: ./ngnix
-      restart: unless-stopped
-      ports:
-         - '8080:80'
-      volumes:
-         - ./ngnix/ngnix-conf:/etc/ngnix/conf.d
    hlstream:
       build: .
       image: hlstream
       restart: unless-stopped
-      command: ./full_code/full_pipeline
       ports:
-         - '80:8554'
-      depends_on:
-         - ngnix
+         - '8554:8554'
+      command: ./full_code/full_pipeline
       volumes:
          - streams_data:/app
+      networks:
+         - app-network
+   nginx:
+      image: nginx:latest
+      restart: unless-stopped
+      ports:
+         - '8080:80'
+      depends_on:
+         - hlstream
+      volumes:
+         # - streams_data:/app
+         - ./nginx:/etc/nginx
+         - streams_data:/usr/share/nginx/html
+      networks:
+         - app-network
 volumes:
    streams_data:
+networks:
+   app-network:
+      driver: bridge
