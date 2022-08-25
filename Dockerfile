@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 RUN mkdir /app
 WORKDIR /app
 ENV LD_LIBRARY_PATH=/usr/local/lib

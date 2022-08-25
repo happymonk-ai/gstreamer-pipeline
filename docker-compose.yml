@@ -9,8 +9,6 @@ services:
       command: ./full_code/full_pipeline
       volumes:
          - streams_data:/app
-      networks:
-         - app-network
    nginx:
       image: nginx:latest
       restart: unless-stopped
@@ -19,13 +17,7 @@ services:
       depends_on:
          - hlstream
       volumes:
-         # - streams_data:/app
          - ./nginx:/etc/nginx
          - streams_data:/usr/share/nginx/html
-      networks:
-         - app-network
 volumes:
    streams_data:
-networks:
-   app-network:
-      driver: bridge
