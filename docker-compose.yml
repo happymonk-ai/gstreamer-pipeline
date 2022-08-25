@@ -27,4 +27,4 @@ volumes:
    streams_data:
 networks:
    app-network:
-      drive: bridge
+      driver: bridge
