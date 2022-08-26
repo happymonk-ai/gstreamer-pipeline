@@ -31,7 +31,7 @@ static GstMessage *msg;
 static GMainLoop *loop;
 static GstElement *pipe1, *app_sink;
 
-static char *nats_url = "nats://216.48.181.154:4222";
+static char *nats_url = "nats://216.48.181.154:5222";
 static natsConnection *conn = NULL;
 static natsSubscription *sub = NULL;
 static natsStatus s;
@@ -148,7 +148,7 @@ static gboolean hls_server_device(char *file_name, char *file_url, char *file_pa
 
     gchar *gst_str1, *gst_str2, *gst_str3;
 
-    gst_str1 = g_strdup_printf("rtspsrc location=%s ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8080/stream%s playlist-location=%s/%s.m3u8 location=%s", file_url, file_name, file_path, file_name, file_path);
+    gst_str1 = g_strdup_printf("rtspsrc location=%s ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", file_url, file_name, file_path, file_name, file_path);
 
     gst_str2 = "/segment.%05d.ts target-duration=30  max-files=30 playlist-length=30";
 
