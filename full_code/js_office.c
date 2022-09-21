@@ -213,11 +213,11 @@ static gboolean add_device(gchar *location, gchar *id)
 
     if ((ID == 4) || (ID == 6))
     {
-        gst_str = g_strdup_printf("rtspsrc location=%s name=%s user-id=test user-pw=test123456789 ! queue max-size-buffers=2 ! rtph265depay name=depay-%s ! h265parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 512, height = 512 ! appsink name=sink-%s", location, id, id, id, id, id, id, id);
+        gst_str = g_strdup_printf("rtspsrc location=%s name=%s user-id=test user-pw=test123456789 ! queue max-size-buffers=2 ! rtph265depay name=depay-%s ! h265parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 720, height = 720 ! appsink name=sink-%s", location, id, id, id, id, id, id, id);
     }
     else
     {
-        gst_str = g_strdup_printf("rtspsrc location=%s name=%s user-id=test user-pw=test123456789 ! queue max-size-buffers=2 ! rtph264depay name=depay-%s ! h264parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 512, height = 512 ! appsink name=sink-%s", location, id, id, id, id, id, id, id);
+        gst_str = g_strdup_printf("rtspsrc location=%s name=%s user-id=test user-pw=test123456789 ! queue max-size-buffers=2 ! rtph264depay name=depay-%s ! h264parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 720, height = 720 ! appsink name=sink-%s", location, id, id, id, id, id, id, id);
     }
 
     g_print("%s\n", gst_str);
