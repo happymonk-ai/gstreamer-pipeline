@@ -322,7 +322,7 @@ int main(int argc, char *argv[])
 
     gchar *location, *id, *file_path;
 
-    env_load("./.env", false);
+   //  env_load("./.env", false);
 
     const char *stream1 = getenv("NATS_FRAME_STREAM");
     const char *subject1 = getenv("NATS_FRAME_SUBJECT");
