@@ -1,4 +1,4 @@
-// gcc js_office.c -o js_office -lgstnet-1.0 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats`
+//gcc js_camera.c -o js_camera -ldotenv -lgstnet-1.0 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats`
 
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
@@ -6,7 +6,7 @@
 #include <gst/net/gstnettimeprovider.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "/app/nats.c/examples/examples.h"
+#include "/home/nivetheni/nats.c/examples/examples.h"
 #include <gst/net/gstnet.h>
 #include <json.h>
 #include <string.h>
@@ -16,7 +16,7 @@
 #include <unistd.h>
 #include <memory.h>
 
-#define PORT 8554
+#define PORT "8554"
 
 static GMainLoop *loop;
 static GstRTSPServer *server;
@@ -32,18 +32,22 @@ static GstMessage *msg;
 static GMainLoop *loop;
 static GstElement *pipe1, *app_sink;
 
+static char *nats_url = "nats://216.48.181.154:4222";
 static natsConnection *conn = NULL;
-static natsStatistics *stats = NULL;
+static natsSubscription *sub = NULL;
+static natsStatus s;
+static volatile bool done = false;
+static const char *subject = "device.*.stream";
+static const char *queueGroup = "device::stream::crud";
 static jsCtx *js = NULL;
 static jsOptions jsOpts;
 static jsErrCode jerr = 0;
-static natsStatus s;
 volatile int errors = 0;
+
+static natsStatistics *stats = NULL;
 
 const char *stream1 = "device_stream";
 const char *subject1 = "stream.*.frame";
-
-static char *nats_url = "nats://216.48.181.154:5222";
 
 static GError *error = NULL;
 static gchar *service;
@@ -91,9 +95,6 @@ custom_setup_rtpbin(GstRTSPMedia *media, GstElement *rtpbin)
     return TRUE;
 }
 
-static gboolean add_device(gchar *location, gchar *id);
-
-/* Jetstream Publisher Error */
 static void
 _jsPubErr(jsCtx *js, jsPubAckErr *pae, void *closure)
 {
@@ -105,7 +106,40 @@ _jsPubErr(jsCtx *js, jsPubAckErr *pae, void *closure)
     *errors = (*errors + 1);
 }
 
-static gboolean hls_server_device(char *file_name, char *device_url, char *file_path)
+/*
+ * In real life the operations done here are way more complicated, but it's
+ * only an example.
+ */
+struct json_object *find_something(struct json_object *jobj, const char *key)
+{
+    struct json_object *tmp;
+
+    json_object_object_get_ex(jobj, key, &tmp);
+
+    return tmp;
+}
+
+static char *removeChar(char *str, char charToRemmove)
+{
+    int i, j;
+    int len = strlen(str);
+    for (i = 0; i < len; i++)
+    {
+        if (str[i] == charToRemmove)
+        {
+            for (j = i; j < len; j++)
+            {
+                str[j] = str[j + 1];
+            }
+            len--;
+            i--;
+        }
+    }
+
+    return str;
+}
+
+static gboolean hls_server_device(char *file_name, char *file_url, char *file_path)
 {
 
     GstStateChangeReturn ret;
@@ -115,20 +149,9 @@ static gboolean hls_server_device(char *file_name, char *device_url, char *file_
 
     gchar *gst_str1, *gst_str2, *gst_str3;
 
-    int ID_1;
+    gst_str1 = g_strdup_printf("rtspsrc location=%s ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8554 playlist-location=%s/%s.m3u8 location=%s", file_url, file_path, file_name, file_path);
 
-    ID_1 = atoi(file_name);
-
-    if ((ID_1 == 4) || (ID_1 == 6))
-    {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph265depay ! avdec_h265 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
-    }
-    else
-    {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
-    }
-
-    gst_str2 = "/segment.%05d.ts target-duration=15 max-files=15 playlist-length=30";
+    gst_str2 = "/segment.%05d.ts target-duration=15  max-files=15 playlist-length=30";
 
     gst_str3 = (char *)malloc(1 + strlen(gst_str1) + strlen(gst_str2));
 
@@ -166,29 +189,26 @@ err:
     return FALSE;
 }
 
-/* Callback when a sample is fetched inside the pipeline */
 static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
 {
     GstSample *sample;
     GstBuffer *buffer;
-    GstBuffer *buffer_bytes;
-    GstCaps *caps;
-    GstStructure *str;
     GstMapInfo info;
-    GstMapInfo map;
-    gboolean res;
-    gint width, height;
     GstClockTime timestamp;
-    struct json_object *jobj1, *jobj2;
-    const gchar *jstr1, *jstr2;
-    gchar *frame_data;
+    struct json_object *jobj, *video_id;
+    const gchar *id, *jstr;
+    gchar *nats_str, *json_str;
 
-    /* Fetch the device id from pointer data */
-    gchar *device_id = user_data;
+    json_str = user_data;
 
-    printf("The %s has started\n", device_id);
+    printf("Received Json '%s'\n", json_str);
 
-    gchar *subj1 = g_strdup_printf("stream.%s.frame", device_id);
+    jobj = json_tokener_parse(json_str);
+    video_id = find_something(jobj, "device_id");
+
+    id = json_object_to_json_string(video_id);
+
+    gchar *subj1 = g_strdup_printf("stream.%s.frame", id);
 
     printf("Sending messages to subject '%s'\n", subj1);
 
@@ -197,34 +217,28 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
 
     if (sample)
     {
-        /* Get the sample buffer */
         buffer = gst_sample_get_buffer(sample);
         timestamp = GST_BUFFER_PTS(buffer);
 
         if (gst_buffer_map(buffer, &info, (GstMapFlags)(GST_MAP_READ)))
         {
-            /* Defining json */
-            jobj1 = json_object_new_object();
-            jobj2 = json_object_new_object();
-            json_object_object_add(jobj1, "device_id", json_object_new_string(device_id));
-            json_object_object_add(jobj1, "frame_bytes", json_object_new_string_len(info.data, info.size));
-            json_object_object_add(jobj1, "timestamp", json_object_new_int((unsigned long)time(NULL)));
-            json_object_object_add(jobj2, "latitude", json_object_new_string("11.342423"));
-            json_object_object_add(jobj2, "longitude", json_object_new_string("77.728165"));
-            jstr2 = json_object_to_json_string_ext(jobj2, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
-            json_object_object_add(jobj1, "geo-location", json_object_new_string(jstr2));
 
-            /* Converting Json to String */
-            jstr1 = json_object_to_json_string(jobj1);
+            json_object_object_add(jobj, "frame_bytes", json_object_new_string_len(info.data, info.size));
+            json_object_object_add(jobj, "timestamp", json_object_new_int((unsigned long)time(NULL)));
 
-            int len = strlen(jstr1);
+            jstr = json_object_to_json_string(jobj);
+
+            int len = strlen(jstr);
 
             g_print("LENGTH - %d\n", len);
 
-            /* Publishing the Json string through Jetstream*/
+            // nats_str = malloc(strlen(jstr) + 1);
+
+            // strcpy(nats_str, jstr);
+
             for (count = 0; (s == NATS_OK) && (count < 1); count++)
             {
-                s = js_PublishAsync(js, subj1, (const void *)(jstr1), len, NULL);
+                s = js_PublishAsync(js, subj1, (const void *)(jstr), len, NULL);
             }
 
             if (s == NATS_OK)
@@ -237,7 +251,6 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
                 // being sent.
                 jsPubOpts.MaxWait = 1000000000;
                 s = js_PublishAsyncComplete(js, &jsPubOpts);
-                printf("published async\n");
             }
 
             if (s == NATS_OK)
@@ -252,42 +265,28 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
             }
         }
 
-        g_free(jobj2);
-        g_free(jobj1);
-
         gst_buffer_unmap(buffer, &info);
         gst_sample_unref(sample);
+
         return GST_FLOW_OK;
     }
-
+    g_free(video_id);
+    g_free(jobj);
     return GST_FLOW_ERROR;
 }
 
-/* Starting the MP4 stream */
-static gboolean add_device(gchar *location, gchar *id)
+static gboolean add_device(char *id, char *url, char *json_str)
 {
     GstStateChangeReturn ret;
     GError *error = NULL;
-    int ID;
 
-    g_print("Starting the device streaming pipeline for %s\n", id);
+    g_print("Starting the camera streaming pipeline for %s\n", id);
 
     gchar *gst_str, *sink_name;
 
     sink_name = g_strdup_printf("sink-%s", id);
 
-    ID = atoi(id);
-
-    if ((ID == 4) || (ID == 6))
-    {
-        gst_str = g_strdup_printf("rtspsrc location=%s name=%s user-id=test user-pw=test123456789 ! queue max-size-buffers=2 ! rtph265depay name=depay-%s ! h265parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 512, height = 512 ! appsink name=sink-%s", location, id, id, id, id, id, id, id);
-    }
-    else
-    {
-        gst_str = g_strdup_printf("rtspsrc location=%s name=%s user-id=test user-pw=test123456789 ! queue max-size-buffers=2 ! rtph264depay name=depay-%s ! h264parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 512, height = 512 ! appsink name=sink-%s", location, id, id, id, id, id, id, id);
-    }
-
-    g_print("%s\n", gst_str);
+    gst_str = g_strdup_printf("rtspsrc location=%s latency=40 is-live=true name=%s ntp-time-source=3 buffer-mode=4 ntp-sync=TRUE ! rtph264depay name=depay-%s ! h264parse name=parse-%s ! decodebin name=decode-%s ! videoconvert name=convert-%s ! videoscale name=scale-%s ! video/x-raw, format=GRAY8, width = 720, height = 720 ! appsink name=%s", url, id, id, id, id, id, id, sink_name);
 
     pipe1 = gst_parse_launch(gst_str, &error);
 
@@ -297,20 +296,26 @@ static gboolean add_device(gchar *location, gchar *id)
         g_error_free(error);
         goto err;
     }
+    else
+    {
+        g_print("The pipeline launched successfully\n");
+    }
 
+    /*checking whether the appsink is null*/
     app_sink = gst_bin_get_by_name(GST_BIN(pipe1), sink_name);
     g_assert_nonnull(app_sink);
 
+    /*callback function to fetch the frames from sample*/
     g_object_set(app_sink, "emit-signals", TRUE, NULL);
-    g_signal_connect(app_sink, "new-sample", G_CALLBACK(new_sample), id);
+    g_signal_connect(app_sink, "new-sample", G_CALLBACK(new_sample), json_str);
 
+    /*playing the pipeline*/
     ret = gst_element_set_state(GST_ELEMENT(pipe1), GST_STATE_PLAYING);
     if (ret == GST_STATE_CHANGE_FAILURE)
     {
         goto err;
     }
-    g_free(sink_name);
-    g_free(gst_str);
+
     return TRUE;
 
 err:
@@ -322,65 +327,79 @@ err:
     return FALSE;
 }
 
-static gboolean camera_server(char *device_id, char *device_url)
+static gboolean camera_server(char *device_url, char *device_id, struct json_object *json_obj)
 {
-    gchar *server_str, *file_path, *hls_str, *gst_string;
-    int ID;
+    gchar *server_str_1, *file_path_1, *hls_str_1;
+    const char *json_str_1;
+    char *new_json_str_1;
 
-    ID = atoi(device_id);
+    // char *endpt = g_strdup_printf("/stream%s", device_id);
 
-    char *endpt = g_strdup_printf("/stream%s", device_id);
+    // g_print("Starting RTSP Server Streaming for device id: %s\n", device_id);
 
-    g_print("Starting RTSP Server Streaming for device id: %s\n", device_id);
+    //global_clock = gst_system_clock_obtain();
+    //gst_net_time_provider_new(global_clock, NULL, 8554);
 
-    // g_print("%s, %s, %s\n", endpt, device_url, device_enc);
-
-    global_clock = gst_system_clock_obtain();
-    gst_net_time_provider_new(global_clock, NULL, 8554);
-
-    /* get the mount points for this server, every server has a default object
-     * that be used to map uri mount points to media factories */
-    mounts = gst_rtsp_server_get_mount_points(server);
+    ///* get the mount points for this server, every server has a default object
+    // * that be used to map uri mount points to media factories */
+    //mounts = gst_rtsp_server_get_mount_points(server);
 
     /* make a media factory for a test stream. The default media factory can use
      * gst-launch syntax to create pipelines.
      * any launch line works as long as it contains elements named pay%d. Each
      * element with pay%d names will be a stream */
 
-    if ((ID == 4) || (ID == 6))
-    {
-        gst_string = g_strdup_printf("(rtspsrc location=%s user-id=test user-pw=test123456789 name=src-%s drop-on-latency=true is-live=true latency=0 ! rtpjitterbuffer drop-on-latency=true ! queue ! rtph265depay name=dep-%s ! h265parse name=parse-%s ! queue ! rtph265pay name=pay0 pt=96 )", device_url, device_id, device_id, device_id);
-    }
-    else
-    {
-        gst_string = g_strdup_printf("(rtspsrc location=%s user-id=test user-pw=test123456789 name=src-%s drop-on-latency=true is-live=true latency=0 ! rtpjitterbuffer drop-on-latency=true ! queue ! rtph264depay name=dep-%s ! h264parse name=parse-%s ! queue ! rtph264pay name=pay0 pt=96 )", device_url, device_id, device_id, device_id);
-    }
+    //gchar *gst_string;
 
-    factory = gst_rtsp_media_factory_new();
-    gst_rtsp_media_factory_set_launch(factory, gst_string);
+    //gst_string = g_strdup_printf("(rtspsrc location=%s name=src-%s drop-on-latency=true is-live=true latency=0 ! rtpjitterbuffer drop-on-latency=true ! queue ! rtph264depay name=dep-%s ! h264parse name=parse-%s ! queue ! rtph264pay name=pay0 pt=96 )", device_url, device_id, device_id, device_id);
+    //factory = gst_rtsp_media_factory_new();
+    //gst_rtsp_media_factory_set_launch(factory, gst_string);
 
-    gst_rtsp_media_factory_set_shared(factory, TRUE);
-    gst_rtsp_media_factory_set_media_gtype(factory, TEST_TYPE_RTSP_MEDIA);
-    gst_rtsp_media_factory_set_clock(factory, global_clock);
+    //gst_rtsp_media_factory_set_shared(factory, TRUE);
+    //gst_rtsp_media_factory_set_media_gtype(factory, TEST_TYPE_RTSP_MEDIA);
+    //gst_rtsp_media_factory_set_clock(factory, global_clock);
 
     /* attach the test factory to the /test url */
-    gst_rtsp_mount_points_add_factory(mounts, endpt, factory);
+    //gst_rtsp_mount_points_add_factory(mounts, endpt, factory);
 
     /* don't need the ref to the mapper anymore */
-    g_object_unref(mounts);
+    //g_object_unref(mounts);
 
     /* attach the server to the default maincontext */
-    gst_rtsp_server_attach(server, NULL);
+    //gst_rtsp_server_attach(server, NULL);
 
     /* start serving */
-    g_print("stream ready at rtsp://127.0.0.1:%d/%s\n", PORT, endpt);
+    //g_print("stream ready at rtsp://127.0.0.1:%s/%s\n", PORT, endpt);
 
-    g_free(gst_string);
+    //server_str_1 = g_strdup_printf("rtsp://127.0.0.1:%s/%s", PORT, endpt);
+
+    /* converting object to string*/
+    json_str_1 = json_object_to_json_string(json_obj);
+
+    new_json_str_1 = malloc(strlen(json_str_1) + 1);
+
+    strcpy(new_json_str_1, json_str_1);
+
+    printf("%s", new_json_str_1);
+
+    if (!add_device(device_id, device_url, new_json_str_1))
+    {
+       g_printerr("Cannot add stream to Jetstream!\n");
+    }
+
+    // file_path_1 = g_strdup_printf("/app/streams/stream%s", device_id);
+    // mkdir(file_path_1, 0777);
+
+    // if (!hls_server_device(device_id, device_url, file_path_1))
+    // {
+    //     g_printerr("Cannot add stream to HLS Server!\n");
+    // }
+
+    //g_free(gst_string);
 
     return TRUE;
 }
 
-/* Initialize the pipeline with fakesrc and sink */
 static gboolean start_pipeline()
 {
     GstStateChangeReturn ret;
@@ -420,7 +439,6 @@ cb_message(GstBus *bus,
            gpointer user_data)
 {
     GstElement *pipeline = GST_ELEMENT(user_data);
-
     GError *err;
     gchar *debug_info;
 
@@ -431,25 +449,41 @@ cb_message(GstBus *bus,
         gst_message_parse_error(message, &err, &debug_info);
         g_printerr("Error received from element %s: %s\n", GST_OBJECT_NAME(message->src), err->message);
         g_printerr("Debugging information: %s\n", debug_info ? debug_info : "none");
+        g_clear_error(&err);
+        g_free(debug_info);
         break;
     case GST_MESSAGE_EOS:
-        g_print("we reached EOS\n");
-        g_main_loop_quit(loop);
+        g_print("EOS Reached\n");
+        break;
+    case GST_MESSAGE_STATE_CHANGED:
+        /* We are only interested in state-changed messages from the pipeline */
+        if (GST_MESSAGE_SRC(message) == GST_OBJECT(pipeline))
+        {
+            GstState old_state, new_state, pending_state;
+            gst_message_parse_state_changed(message, &old_state, &new_state, &pending_state);
+            g_print("Pipeline state changed from %s to %s:\n",
+                    gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
+        }
         break;
     default:
         break;
     }
 }
 
-int main(int argc, char *argv[])
+int main(int argc, gchar *argv[])
 {
+    /* Initializing the gstreamer */
     gst_init(&argc, &argv);
 
-    gchar *location, *id, *file_path;
+    struct json_object *init_json1, *init_json2;
 
+    init_json1 = json_object_new_object();
+    init_json2 = json_object_new_object();
+
+    /* Initializing the main loop */
     loop = g_main_loop_new(NULL, FALSE);
 
-    /* Initial pipeline */
+    /* Starting the pipeline with fakesrc and sink */
     if (!start_pipeline())
     {
         g_printerr("ERROR: Failed to start pipeline");
@@ -457,19 +491,18 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* Adding bus to pipeline */
+    /* Adding bus to the pipeline */
     bus = gst_element_get_bus(pipe1);
     gst_bus_add_signal_watch(bus);
-    g_signal_connect(bus, "message", (GCallback)cb_message,
-                     pipe1);
+    g_signal_connect(bus, "message", (GCallback)cb_message, pipe1);
 
     /* create a RTSP server instance */
-    server = gst_rtsp_server_new();
+    //server = gst_rtsp_server_new();
 
     /* assigning port */
-    g_object_set(server, "service", PORT, NULL);
+    //g_object_set(server, "service", PORT, NULL);
 
-    /* Nats Connection */
+    // Creates a connection to the NATS URL
     s = natsConnection_ConnectTo(&conn, nats_url);
     printf("Connected to Nats\n");
 
@@ -506,6 +539,7 @@ int main(int argc, char *argv[])
             s = js_AddStream(&si, js, &cfg, NULL, &jerr);
             printf("The stream is added\n");
         }
+
         if (s == NATS_OK)
         {
             printf("Stream %s has %" PRIu64 " messages (%" PRIu64 " bytes)\n",
@@ -527,65 +561,49 @@ int main(int argc, char *argv[])
         start = nats_Now();
     }
 
-    location = "rtsp://happymonk:admin123@192.168.1.2:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
-
-    id = g_strdup_printf("1");
-
-    if (!camera_server(id, location))
+    for (int i = 4; i <= 4; i++)
     {
-        g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
-    }
+        char *new_path = g_strdup_printf("rtsp://nivetheni:Chandrika5@192.168.29.6%d/Streaming/Channels/101?transportmode=unicast&profile=Profile_1", i);
+        char *new_id = g_strdup_printf("%d", i);
 
-    if (!add_device(location, id))
-    {
-        g_printerr("Cannot start streaming\n");
-    }
-    file_path = g_strdup_printf("/app/streams/%s", id);
-    mkdir(file_path, 0777);
+        json_object_object_add(init_json1, "device_id", json_object_new_string(new_id));
+        json_object_object_add(init_json1, "device_url", json_object_new_string(new_path));
+        json_object_object_add(init_json1, "type", json_object_new_string("stream"));
+        json_object_object_add(init_json2, "latitude", json_object_new_string("11.342423"));
+        json_object_object_add(init_json2, "longitude", json_object_new_string("77.728165"));
+        const char *jstr2 = json_object_to_json_string_ext(init_json2, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
+        json_object_object_add(init_json1, "geo-location", json_object_new_string(jstr2));
 
-    if (!hls_server_device(id, location, file_path))
-    {
-        g_printerr("Cannot add stream to HLS Server!\n");
-    }
-    sleep(1);
-
-    /* Sending device info to pipeline */
-    /* increase the interation accordingly to add more videos */
-    for (int i = 2; i <= 6; i++)
-    {
-        location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
-        // location = "rtsp://happymonk:admin123@192.168.1.103:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
-
-        id = g_strdup_printf("%d", i);
-
-        if (!add_device(location, id))
+        if (!camera_server(new_path, new_id, init_json1))
         {
-            g_printerr("Cannot start streaming\n");
+            g_printerr("Cannot add the mp4 stream to RTSP Server\n");
         }
-        file_path = g_strdup_printf("/app/streams/%s", id);
-        mkdir(file_path, 0777);
-
-        if (!hls_server_device(id, location, file_path))
-        {
-            g_printerr("Cannot add stream to HLS Server!\n");
-        }
-        sleep(3);
+        sleep(5);
     }
 
+    /* starting the loop */
     g_main_loop_run(loop);
 
+    /* on any error */
     gst_element_set_state(GST_ELEMENT(pipe1), GST_STATE_NULL);
     g_print("Pipeline has been stopped\n");
 
+    // If there was an error, print a stack trace and exit
+    if (s != NATS_OK)
+    {
+        nats_PrintLastErrorStack(stderr);
+        exit(2);
+    }
+
     // Destroy all our objects to avoid report of memory leak
     jsCtx_Destroy(js);
-    natsStatistics_Destroy(stats);
     natsConnection_Destroy(conn);
+    natsSubscription_Destroy(sub);
+    g_main_loop_unref(loop);
 
     // To silence reports of memory still in used with valgrind
     nats_Close();
 
-    g_main_loop_unref(loop);
     gst_object_unref(pipe1);
     gst_message_unref(msg);
     gst_object_unref(bus);
