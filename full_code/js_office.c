@@ -540,14 +540,14 @@ int main(int argc, char *argv[])
     {
         g_printerr("Cannot start streaming\n");
     }
-    file_path = g_strdup_printf("/app/streams/%s", id);
-    mkdir(file_path, 0777);
+    //file_path = g_strdup_printf("/app/streams/%s", id);
+    //mkdir(file_path, 0777);
 
-    if (!hls_server_device(id, location, file_path))
-    {
-        g_printerr("Cannot add stream to HLS Server!\n");
-    }
-    sleep(1);
+    //if (!hls_server_device(id, location, file_path))
+    //{
+    //    g_printerr("Cannot add stream to HLS Server!\n");
+    //}
+    //sleep(1);
 
     /* Sending device info to pipeline */
     /* increase the interation accordingly to add more videos */
@@ -562,13 +562,13 @@ int main(int argc, char *argv[])
         {
             g_printerr("Cannot start streaming\n");
         }
-        file_path = g_strdup_printf("/app/streams/%s", id);
-        mkdir(file_path, 0777);
+        //file_path = g_strdup_printf("/app/streams/%s", id);
+        //mkdir(file_path, 0777);
 
-        if (!hls_server_device(id, location, file_path))
-        {
-            g_printerr("Cannot add stream to HLS Server!\n");
-        }
+        //if (!hls_server_device(id, location, file_path))
+        //{
+        //    g_printerr("Cannot add stream to HLS Server!\n");
+        //}
         sleep(3);
     }
 

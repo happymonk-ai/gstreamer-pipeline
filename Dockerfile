@@ -1,8 +1,6 @@
 FROM ubuntu:22.04
 RUN mkdir /app
 WORKDIR /app
-ENV LD_LIBRARY_PATH=/usr/local/lib
-RUN ln -snf /usr/share/zoneinfo/$CONTAINER_TIMEZONE /etc/localtime && echo $CONTAINER_TIMEZONE > /etc/timezone
 RUN apt-get update && apt-get install -y tzdata
 
 RUN apt-get update -yqq && apt-get install -yqq --no-install-recommends \
@@ -37,7 +35,8 @@ RUN ln -s /app/json-c/build/lib/libjson-c.so /usr/local/lib/libjson-c.so.5
 # Build dotenv-c
 RUN cd dotenv-c && mkdir -p build && cd build && cmake .. && cmake --build . && make install && cd ..
 #RUN gcc js_mp4.c -o  js_mp4 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c)
-RUN cd full_code && gcc js_office.c -o full_pipeline -lgstnet-1.0 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats)
+RUN apt-get update && apt-get -y install libnats-dev
+RUN cd full_code && gcc full_pipeline_camera.c -o full_pipeline -lgstnet-1.0 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats)
 #RUN cd full_code && ls .
 ENV PORT=8554
 EXPOSE 8554/tcp
