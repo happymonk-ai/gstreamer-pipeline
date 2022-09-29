@@ -44,7 +44,7 @@ services:
          - certbot:/var/www/certbot
       networks:
          - app-network
-      command: certonly --webroot -w /var/www/certbot --force-renewal --email ishimwe@happymonk.co -d 27.7.30.57 --agree-tos
+      command: certonly --webroot -w /var/www/certbot --force-renewal --email ishimwe@happymonk.co -d hls.ckdr.co.in --agree-tos
 volumes:
    streams_data:
    certbot:
