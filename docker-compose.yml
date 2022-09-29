@@ -32,23 +32,10 @@ services:
       volumes:
          - ./nginx:/etc/nginx
          - streams_data:/usr/share/nginx/html
-         - certbot_etc:/etc/letsencrypt
-         - certbot:/var/www/certbot
       networks:
          - app-network
-   certbot:
-      image: certbot/certbot
-      container_name: certbot
-      volumes:
-         - certbot_etc:/etc/letsencrypt
-         - certbot:/var/www/certbot
-      networks:
-         - app-network
-      command: certonly --webroot -w /var/www/certbot --force-renewal --email ishimwe@happymonk.co -d hls.ckdr.co.in --agree-tos
 volumes:
    streams_data:
-   certbot:
-   certbot_etc:
 networks:
    app-network:
       driver: bridge
