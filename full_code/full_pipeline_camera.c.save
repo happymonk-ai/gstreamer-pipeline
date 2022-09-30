@@ -1,4 +1,3 @@
-// gcc js_office.c -o js_office -lgstnet-1.0 `pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats`
 
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
@@ -15,8 +14,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <memory.h>
-
-#define PORT 8554
 
 static GMainLoop *loop;
 static GstRTSPServer *server;
@@ -91,9 +88,6 @@ custom_setup_rtpbin(GstRTSPMedia *media, GstElement *rtpbin)
     return TRUE;
 }
 
-static gboolean add_device(gchar *location, gchar *id);
-
-/* Jetstream Publisher Error */
 static void
 _jsPubErr(jsCtx *js, jsPubAckErr *pae, void *closure)
 {
@@ -104,6 +98,7 @@ _jsPubErr(jsCtx *js, jsPubAckErr *pae, void *closure)
 
     *errors = (*errors + 1);
 }
+
 
 static gboolean hls_server_device(char *file_name, char *device_url, char *file_path)
 {
@@ -121,11 +116,11 @@ static gboolean hls_server_device(char *file_name, char *device_url, char *file_
 
     if ((ID_1 == 4) || (ID_1 == 6))
     {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph265depay ! avdec_h265 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc bitrate=512 ! hlssink2 playlist-root=http://27.7.99.143:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
+        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph265depay ! avdec_h265 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
     }
     else
     {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://27.7.99.143:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
+        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=http://127.0.0.1:8000/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
     }
 
     gst_str2 = "/segment.%05d.ts target-duration=15 max-files=15 playlist-length=30";
@@ -380,7 +375,6 @@ static gboolean camera_server(char *device_id, char *device_url)
     return TRUE;
 }
 
-/* Initialize the pipeline with fakesrc and sink */
 static gboolean start_pipeline()
 {
     GstStateChangeReturn ret;
@@ -420,7 +414,6 @@ cb_message(GstBus *bus,
            gpointer user_data)
 {
     GstElement *pipeline = GST_ELEMENT(user_data);
-
     GError *err;
     gchar *debug_info;
 
@@ -431,10 +424,21 @@ cb_message(GstBus *bus,
         gst_message_parse_error(message, &err, &debug_info);
         g_printerr("Error received from element %s: %s\n", GST_OBJECT_NAME(message->src), err->message);
         g_printerr("Debugging information: %s\n", debug_info ? debug_info : "none");
+        g_clear_error(&err);
+        g_free(debug_info);
         break;
     case GST_MESSAGE_EOS:
-        g_print("we reached EOS\n");
-        g_main_loop_quit(loop);
+        g_print("EOS Reached\n");
+        break;
+    case GST_MESSAGE_STATE_CHANGED:
+        /* We are only interested in state-changed messages from the pipeline */
+        if (GST_MESSAGE_SRC(message) == GST_OBJECT(pipeline))
+        {
+            GstState old_state, new_state, pending_state;
+            gst_message_parse_state_changed(message, &old_state, &new_state, &pending_state);
+            g_print("Pipeline state changed from %s to %s:\n",
+                    gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
+        }
         break;
     default:
         break;
@@ -462,6 +466,7 @@ int main(int argc, char *argv[])
     gst_bus_add_signal_watch(bus);
     g_signal_connect(bus, "message", (GCallback)cb_message,
                      pipe1);
+
 
     /* create a RTSP server instance */
     server = gst_rtsp_server_new();
@@ -536,27 +541,32 @@ int main(int argc, char *argv[])
         g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
     }
 
-    if (!add_device(location, id))
-    {
-        g_printerr("Cannot start streaming\n");
-    }
-    file_path = g_strdup_printf("/app/streams/%s", id);
-    mkdir(file_path, 0777);
+    //if (!add_device(location, id))
+    //{
+    //    g_printerr("Cannot start streaming\n");
+    //}
+    //file_path = g_strdup_printf("/app/streams/%s", id);
+    //mkdir(file_path, 0777);
 
-    if (!hls_server_device(id, location, file_path))
-    {
-        g_printerr("Cannot add stream to HLS Server!\n");
-    }
+    //if (!hls_server_device(id, location, file_path))
+    //{
+    //    g_printerr("Cannot add stream to HLS Server!\n");
+    //}
     //sleep(1);
 
     /* Sending device info to pipeline */
     /* increase the interation accordingly to add more videos */
-    //for (int i = 2; i <= 6; i++)
-    //{
-        //location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
+    for (int i = 2; i <= 6; i++)
+    {
+        location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
         // location = "rtsp://happymonk:admin123@192.168.1.103:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
+        
+        id = g_strdup_printf("%d", i);
 
-        //id = g_strdup_printf("%d", i);
+        if (!camera_server(id, location))
+        {
+            g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
+        }
 
         //if (!add_device(location, id))
         //{
@@ -569,8 +579,8 @@ int main(int argc, char *argv[])
         //{
         //    g_printerr("Cannot add stream to HLS Server!\n");
         //}
-        //sleep(3);
-    //}
+        sleep(3);
+    }
 
     g_main_loop_run(loop);
 
