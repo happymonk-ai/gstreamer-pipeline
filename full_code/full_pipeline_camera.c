@@ -44,6 +44,9 @@ const char *subject1 = "stream.*.frame";
 
 static char *nats_url = "nats://216.48.181.154:5222";
 
+char latitude[10][50]={"0", "12.972442", "11.3410364", "11.004556", "13.067439", "11.65376", "10.850516"};
+char longitude[10][50]={"0", "77.580643", "77.7171642", "76.961632", "80.237617", "78.15538", "76.271080"};
+
 static GError *error = NULL;
 static gchar *service;
 static gchar *uri = NULL;
@@ -179,9 +182,11 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
     struct json_object *jobj1, *jobj2;
     const gchar *jstr1, *jstr2;
     gchar *frame_data;
+    int int_id;
 
     /* Fetch the device id from pointer data */
     gchar *device_id = user_data;
+    int_id = atoi(device_id);
 
     printf("The %s has started\n", device_id);
 
@@ -206,8 +211,8 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
             json_object_object_add(jobj1, "device_id", json_object_new_string(device_id));
             json_object_object_add(jobj1, "frame_bytes", json_object_new_string_len(info.data, info.size));
             json_object_object_add(jobj1, "timestamp", json_object_new_int((unsigned long)time(NULL)));
-            json_object_object_add(jobj2, "latitude", json_object_new_string("11.342423"));
-            json_object_object_add(jobj2, "longitude", json_object_new_string("77.728165"));
+            json_object_object_add(jobj2, "latitude", json_object_new_string(latitude[int_id]));
+            json_object_object_add(jobj2, "longitude", json_object_new_string(longitude[int_id]));
             jstr2 = json_object_to_json_string_ext(jobj2, JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY);
             json_object_object_add(jobj1, "geo-location", json_object_new_string(jstr2));
 
