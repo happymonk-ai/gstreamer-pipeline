@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <memory.h>
+#include <dotenv.h>
 
 #define PORT "8554"
 
@@ -51,6 +52,9 @@ static GError *error = NULL;
 static gchar *service;
 static gchar *uri = NULL;
 static gint64 num_loops = -1;
+
+static gboolean add_device(gchar *location, gchar *id);
+static gboolean camera_server(char *device_id, char *device_url);
 
 #define TEST_TYPE_RTSP_MEDIA_FACTORY (test_rtsp_media_factory_get_type())
 #define TEST_TYPE_RTSP_MEDIA (test_rtsp_media_get_type())
@@ -121,14 +125,14 @@ static gboolean hls_server_device(char *file_name, char *device_url, char *file_
 
     if ((ID_1 == 4) || (ID_1 == 6))
     {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph265depay ! avdec_h265 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc bitrate=512 ! hlssink2 playlist-root=https://streams.ckdr.co.in/streams/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
+        gst_str1 = g_strdup_printf("rtspsrc protocols=tcp location=%s user-id=test user-pw=test123456789 ! queue max-size-time=100000000 ! rtph265depay ! h265parse config_interval=-1 ! decodebin ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc ! mpegtsmux ! hlssink playlist-root=https://streams.ckdr.co.in/streams/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
     }
     else
     {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=https://streams.ckdr.co.in/streams/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
+        gst_str1 = g_strdup_printf("rtspsrc protocols=tcp location=%s user-id=test user-pw=test123456789 ! queue max-size-time=100000000 ! rtph264depay ! h264parse config_interval=-1 ! decodebin ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc ! mpegtsmux ! hlssink playlist-root=https://streams.ckdr.co.in/streams/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
     }
 
-    gst_str2 = "/segment.%05d.ts target-duration=15 max-files=15 playlist-length=30";
+    gst_str2 = "/segment.%05d.ts target-duration=5 playlist-length=5 max-files=8";
 
     gst_str3 = (char *)malloc(1 + strlen(gst_str1) + strlen(gst_str2));
 
@@ -263,6 +267,68 @@ static GstFlowReturn new_sample(GstAppSink *sink, gpointer user_data)
     }
 
     return GST_FLOW_ERROR;
+}
+
+/* called when a new message is posted on the bus */
+static void
+cb_message(GstBus *bus,
+           GstMessage *message,
+           gpointer user_data)
+{
+    GstElement *pipe1 = GST_ELEMENT(user_data);
+    GError *err;
+    gchar *debug_info, *id, *location, *file_path;
+    switch (GST_MESSAGE_TYPE(message))
+    {
+    case GST_MESSAGE_ERROR:
+        g_print("we received an error!\n");
+        gst_message_parse_error(message, &err, &debug_info);
+        g_printerr("Error received from element %s: %s\n", GST_OBJECT_NAME(message->src), err->message);
+        g_printerr("Debugging information: %s\n", debug_info ? debug_info : "none");
+
+        id = gst_object_get_name(message->src);
+        g_print("THE DEVICE ID IS: %s\n", id);
+
+        location = getenv(g_strdup_printf("RTSP_URL_%s", id));
+        g_print("THE LOCATION IS: %s\n", location);
+
+        if (!camera_server(id, location))
+        {
+            g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
+        }
+
+        if (!add_device(location, id))
+        {
+            g_printerr("Cannot start streaming\n");
+        }
+        file_path = g_strdup_printf("/app/streams/stream%s", id);
+        mkdir(file_path, 0777);
+
+        if (!hls_server_device(id, location, file_path))
+        {
+            g_printerr("Cannot add stream to HLS Server!\n");
+        }
+
+        g_clear_error(&err);
+        g_free(debug_info);
+
+        break;
+    case GST_MESSAGE_EOS:
+        g_print("EOS Reached\n");
+        break;
+    case GST_MESSAGE_STATE_CHANGED:
+        /* We are only interested in state-changed messages from the pipeline */
+        if (GST_MESSAGE_SRC(message) == GST_OBJECT(pipe1))
+        {
+            GstState old_state, new_state, pending_state;
+            gst_message_parse_state_changed(message, &old_state, &new_state, &pending_state);
+            g_print("Pipeline state changed from %s to %s:\n",
+                    gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 /* Starting the MP4 stream */
@@ -414,44 +480,6 @@ err:
     return FALSE;
 }
 
-/* called when a new message is posted on the bus */
-static void
-cb_message(GstBus *bus,
-           GstMessage *message,
-           gpointer user_data)
-{
-    GstElement *pipeline = GST_ELEMENT(user_data);
-    GError *err;
-    gchar *debug_info;
-
-    switch (GST_MESSAGE_TYPE(message))
-    {
-    case GST_MESSAGE_ERROR:
-        g_print("we received an error!\n");
-        gst_message_parse_error(message, &err, &debug_info);
-        g_printerr("Error received from element %s: %s\n", GST_OBJECT_NAME(message->src), err->message);
-        g_printerr("Debugging information: %s\n", debug_info ? debug_info : "none");
-        g_clear_error(&err);
-        g_free(debug_info);
-        break;
-    case GST_MESSAGE_EOS:
-        g_print("EOS Reached\n");
-        break;
-    case GST_MESSAGE_STATE_CHANGED:
-        /* We are only interested in state-changed messages from the pipeline */
-        if (GST_MESSAGE_SRC(message) == GST_OBJECT(pipeline))
-        {
-            GstState old_state, new_state, pending_state;
-            gst_message_parse_state_changed(message, &old_state, &new_state, &pending_state);
-            g_print("Pipeline state changed from %s to %s:\n",
-                    gst_element_state_get_name(old_state), gst_element_state_get_name(new_state));
-        }
-        break;
-    default:
-        break;
-    }
-}
-
 int main(int argc, char *argv[])
 {
     gst_init(&argc, &argv);
@@ -468,11 +496,11 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* Adding bus to pipeline */
-    bus = gst_element_get_bus(pipe1);
-    gst_bus_add_signal_watch(bus);
-    g_signal_connect(bus, "message", (GCallback)cb_message,
-                     pipe1);
+    // /* Adding bus to pipeline */
+    // bus = gst_element_get_bus(pipe1);
+    // gst_bus_add_signal_watch(bus);
+    // g_signal_connect(bus, "message", (GCallback)cb_message,
+    //                  pipe1);
 
 
     /* create a RTSP server instance */
@@ -586,7 +614,7 @@ int main(int argc, char *argv[])
         {
             g_printerr("Cannot add stream to HLS Server!\n");
         }
-        sleep(3);
+        sleep(1);
     }
 
     g_main_loop_run(loop);
