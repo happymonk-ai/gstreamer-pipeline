@@ -36,7 +36,7 @@ RUN ln -s /app/json-c/build/lib/libjson-c.so /usr/local/lib/libjson-c.so.5
 RUN cd dotenv-c && mkdir -p build && cd build && cmake .. && cmake --build . && make install && cd ..
 #RUN gcc js_mp4.c -o  js_mp4 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 libnats json-c)
 RUN apt-get update && apt-get -y install libnats-dev
-RUN cd full_code && gcc full_pipeline_camera.c -o full_pipeline -ldotenv -lgstnet-1.0 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats)
+RUN cd full_code && gcc full_pipeline_camera.c -o full_pipeline -dotenv -lgstnet-1.0 $(pkg-config --cflags --libs gstreamer-1.0 gstreamer-app-1.0 gstreamer-rtsp-server-1.0 json-c libnats)
 #RUN cd full_code && ls .
 ENV PORT=8554
 EXPOSE 8554/tcp
