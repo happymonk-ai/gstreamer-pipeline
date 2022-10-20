@@ -34,7 +34,7 @@ services:
       volumes:
          - ./nginx:/etc/nginx:ro
          - ./certbot/www:/var/www/certbot/:ro
-         - ./certbot/conf/:/etc/nginx/ssl/:ro
+         - ./certbot/conf/:/etc/nginx/ssl/:rw
          - streams_data:/usr/share/nginx/html
       networks:
          - app-network
@@ -43,6 +43,8 @@ services:
       volumes:
          - ./certbot/www/:/var/www/certbot/:rw
          - ./certbot/conf/:/etc/letsencrypt/:rw
+      networks:
+         - app-network
 volumes:
    streams_data:
 networks:
