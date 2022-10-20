@@ -6,11 +6,13 @@ services:
       restart: unless-stopped
       ports:
          - '8554:8554'
-      command: GST_DEBUG_FILE=/app/debug.log GST_DEBUG=6 ./full_code/full_pipeline
+      command: ./full_code/full_pipeline
       environment:
          NATS_URL: 'nats://216.48.181.154:5222'
          NATS_FRAME_STREAM: 'device_stream'
          NATS_FRAME_SUBJECT: 'stream.*.frame'
+         GST_DEBUG_FILE: './debug.log'
+         GST_DEBUG: 6
          RTSP_URL_1: 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
          RTSP_URL_2: 'rtsp://happymonk:admin123@streams.ckdr.co.in:2554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
          RTSP_URL_3: 'rtsp://happymonk:admin123@streams.ckdr.co.in:3554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
@@ -25,14 +27,20 @@ services:
       image: nginx:latest
       restart: unless-stopped
       ports:
-         - '2000:80'
+         - '80:80'
+         - '443:443'
       depends_on:
          - hlstream
       volumes:
-         - ./nginx:/etc/nginx
+         - ./nginx:/etc/nginx:ro
+         - ./certbot/www:/var/www/certbot/:ro
          - streams_data:/usr/share/nginx/html
       networks:
          - app-network
+   certbot:
+      image: certbot/certbot:latest
+      volumes:
+         - ./certbot/www/:/var/www/certbot/:rw
 volumes:
    streams_data:
 networks:
