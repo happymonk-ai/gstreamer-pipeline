@@ -151,11 +151,11 @@ static gboolean hls_server_device(char *file_name, char *device_url, char *file_
 
     if ((ID_1 == 4) || (ID_1 == 6))
     {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph265depay ! avdec_h265 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc bitrate=512 ! hlssink2 playlist-root=https://hls.ckdr.co.in/live/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
+        gst_str1 = g_strdup_printf("rtspsrc protocols=tcp location=%s user-id=test user-pw=test123456789 ! queue max-size-time=100000000 ! rtph265depay ! h265parse config_interval=-1 ! decodebin ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x265enc ! mpegtsmux ! hlssink playlist-root=https://hls.ckdr.co.in/live/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
     }
     else
     {
-        gst_str1 = g_strdup_printf("rtspsrc location=%s user-id=test user-pw=test123456789 ! rtph264depay ! avdec_h264 ! clockoverlay ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc bitrate=512 ! hlssink2 playlist-root=https://hls.ckdr.co.in/live/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
+        gst_str1 = g_strdup_printf("rtspsrc protocols=tcp location=%s user-id=test user-pw=test123456789 ! queue max-size-time=100000000 ! rtph264depay ! h264parse config_interval=-1 ! decodebin ! videoconvert ! videoscale ! video/x-raw,width=640, height=360 ! x264enc ! mpegtsmux ! hlssink playlist-root=https://hls.ckdr.co.in/live/stream%s playlist-location=%s/%s.m3u8 location=%s", device_url, file_name, file_path, file_name, file_path);
     }
 
     gst_str2 = "/segment.%05d.ts target-duration=10 playlist-length=3 max-files=6";
