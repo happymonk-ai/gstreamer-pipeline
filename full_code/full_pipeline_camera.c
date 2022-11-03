@@ -1,4 +1,3 @@
-
 #include <gst/gst.h>
 #include <gst/rtsp-server/rtsp-server.h>
 #include "test-replay-server.h"
@@ -15,11 +14,6 @@
 #include <unistd.h>
 #include <memory.h>
 #include <dotenv.h>
-#define __USE_XOPEN_EXTENDED
-#define _XOPEN_SOURCE 500
-#include <stdio.h>
-#include <ftw.h>
-#include <unistd.h>
 
 #define PORT "8554"
 
@@ -44,8 +38,6 @@ static jsOptions jsOpts;
 static jsErrCode jerr = 0;
 static natsStatus s;
 volatile int errors = 0;
-
-struct FTW *ftwbuf;
 
 const char *stream1 = "device_stream";
 const char *subject1 = "stream.*.frame";
@@ -113,25 +105,6 @@ _jsPubErr(jsCtx *js, jsPubAckErr *pae, void *closure)
     printf("Original message: %.*s\n", natsMsg_GetDataLength(pae->Msg), natsMsg_GetData(pae->Msg));
 
     *errors = (*errors + 1);
-}
-
-int nftw(const char *path, int (*fn)(const char *,
-       const struct stat *, int, struct FTW *), int fd_limit, int flags);
-
-int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
-{
-    int rv = remove(fpath);
-    g_print("Deleted the folder\n");
-
-    if (rv)
-        perror(fpath);
-
-    return rv;
-}
-
-int rmrf(char *path)
-{
-    return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 
@@ -514,8 +487,6 @@ int main(int argc, char *argv[])
 {
     gst_init(&argc, &argv);
 
-    // env_load("./.env", false);
-
     gchar *location, *id, *file_path;
 
     loop = g_main_loop_new(NULL, FALSE);
@@ -599,22 +570,20 @@ int main(int argc, char *argv[])
         start = nats_Now();
     }
 
-    // location = "rtsp://happymonk:admin123@192.168.1.2:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
+    location = "rtsp://happymonk:admin123@192.168.1.2:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
 
     id = g_strdup_printf("1");
-    location = getenv(g_strdup_printf("RTSP_URL_%s", id));
 
     // if (!camera_server(id, location))
     // {
     //     g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
     // }
 
-    // if (!add_device(location, id))
-    // {
-    //     g_printerr("Cannot start streaming\n");
-    // }
+    if (!add_device(location, id))
+    {
+        g_printerr("Cannot start streaming\n");
+    }
     file_path = g_strdup_printf("/app/streams/stream%s", id);
-    rmrf(file_path);
     mkdir(file_path, 0777);
 
     if (!hls_server_device(id, location, file_path))
@@ -627,8 +596,8 @@ int main(int argc, char *argv[])
     /* increase the interation accordingly to add more videos */
     for (int i = 2; i <= 6; i++)
     {
-        // location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
-        location = getenv(g_strdup_printf("RTSP_URL_%d", i));
+        location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
+        // location = "rtsp://happymonk:admin123@192.168.1.103:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
         
         id = g_strdup_printf("%d", i);
 
@@ -637,12 +606,11 @@ int main(int argc, char *argv[])
         //     g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
         // }
 
-        // if (!add_device(location, id))
-        // {
-        //     g_printerr("Cannot start streaming\n");
-        // }
+        if (!add_device(location, id))
+        {
+            g_printerr("Cannot start streaming\n");
+        }
         file_path = g_strdup_printf("/app/streams/stream%s", id);
-        rmrf(file_path);
         mkdir(file_path, 0777);
 
         if (!hls_server_device(id, location, file_path))
