@@ -570,10 +570,10 @@ int main(int argc, char *argv[])
         start = nats_Now();
     }
 
-    location = "rtsp://happymonk:admin123@192.168.1.2:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
+   //  location = "rtsp://happymonk:admin123@192.168.1.2:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
 
     id = g_strdup_printf("1");
-
+    location = getenv(g_strdup_printf("RTSP_URL_%s", id));
     // if (!camera_server(id, location))
     // {
     //     g_printerr("Cannot add the device-%s stream to RTSP Server\n", id);
@@ -596,9 +596,9 @@ int main(int argc, char *argv[])
     /* increase the interation accordingly to add more videos */
     for (int i = 2; i <= 6; i++)
     {
-        location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
+      //   location = g_strdup_printf("rtsp://192.168.1.10%d:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif", i);
         // location = "rtsp://happymonk:admin123@192.168.1.103:554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif";
-        
+        location = getenv(g_strdup_printf("RTSP_URL_%d", i));
         id = g_strdup_printf("%d", i);
 
         // if (!camera_server(id, location))
