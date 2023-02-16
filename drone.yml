@@ -1,0 +1,9 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: gstreamer-pipeline
+  image: hlsstream
+  commands:
+  - docker-compose up --build
