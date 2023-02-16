@@ -4,6 +4,6 @@ name: default
 
 steps:
 - name: gstreamer-pipeline
-  image: hlsstream
+  image: plugins/docker
   commands:
   - docker-compose up --build
