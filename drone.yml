@@ -1,9 +1,18 @@
 kind: pipeline
 type: docker
-name: default
+name: docker-compose
 
 steps:
-- name: gstreamer-pipeline
-  image: plugins/docker
+- name: build
+  image: docker/compose:1.29.2
   commands:
-  - docker-compose up --build
+  - docker-compose build
+
+- name: deploy
+  image: docker/compose:1.29.2
+  commands:
+  - docker-compose up -d
+  when:
+    branch: main
+  depends_on:
+  - build
