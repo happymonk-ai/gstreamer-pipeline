@@ -5,6 +5,8 @@ name: gstreamer-pipeline
 steps:
 - name: build
   image: docker:dind
+  trusted: true
+  privileged: true
   commands:
   - dockerd --experimental &
   - sleep 5
@@ -12,6 +14,8 @@ steps:
 
 - name: deploy
   image: docker:dind
+  trusted: true
+  privileged: true
   commands:
   - dockerd --experimental &
   - sleep 5
