@@ -3,24 +3,11 @@ type: docker
 name: gstreamer-pipeline
 
 steps:
-- name: build
+- name: build-n-deploy
   image: docker:dind
   trusted: true
   privileged: true
   commands:
   - dockerd --experimental &
   - sleep 5
-  - docker compose build
-
-- name: deploy
-  image: docker:dind
-  trusted: true
-  privileged: true
-  commands:
-  - dockerd --experimental &
-  - sleep 5
-  - docker compose up -d
-  when:
-    branch: main
-  depends_on:
-  - build
+  - docker compose up --build
