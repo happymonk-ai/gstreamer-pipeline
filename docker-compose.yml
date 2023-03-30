@@ -4,21 +4,46 @@ services:
       build: .
       image: hlstream
       restart: unless-stopped
+      privileged: true
       ports:
-         - '8554:8554'
-      command: ./full_code/full_pipeline
+         - '8555:8555'
+      command: 'python3 ./hls.py' #./full_code/full_pipeline
       environment:
          NATS_URL: 'nats://216.48.181.154:5222'
          NATS_FRAME_STREAM: 'device_stream'
          NATS_FRAME_SUBJECT: 'stream.*.frame'
-         GST_DEBUG_FILE: './debug.log'
-         GST_DEBUG: 6
          RTSP_URL_1: 'rtsp://happymonk:admin123@streams.ckdr.co.in:1554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
-         RTSP_URL_2: 'rtsp://happymonk:admin123@streams.ckdr.co.in:2554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
+         RTSP_URL_2: 'rtsp://test:test123456789@streams.ckdr.co.in:2554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
          RTSP_URL_3: 'rtsp://happymonk:admin123@streams.ckdr.co.in:3554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
          RTSP_URL_4: 'rtsp://happymonk:admin123@streams.ckdr.co.in:4554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
          RTSP_URL_5: 'rtsp://happymonk:admin123@streams.ckdr.co.in:5554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
          RTSP_URL_6: 'rtsp://happymonk:admin123@streams.ckdr.co.in:6554/cam/realmonitor?channel=1&subtype=0&unicast=true&proto=Onvif'
+         RTSP_URL_7: 'rtsp://216.48.184.244:8554/live.stream1'
+         RTSP_URL_8: 'rtsp://216.48.184.244:8554/live.stream2'
+         RTSP_URL_9: 'rtsp://216.48.184.244:8554/live.stream3'
+         RTSP_URL_10: 'rtsp://216.48.184.244:8554/live.stream4'
+         RTSP_URL_11: 'rtsp://216.48.184.244:8554/live.stream5'
+         RTSP_URL_12: 'rtsp://216.48.184.244:8554/live.stream6'
+         RTSP_URL_13: 'rtsp://216.48.184.244:8554/live.stream7'
+         RTSP_URL_14: 'rtsp://216.48.184.244:8554/live.stream8'
+         RTSP_URL_15: 'rtsp://216.48.184.244:8554/live.stream9'
+
+         TYPE_1: 'H264'
+         TYPE_2: 'H264'
+         TYPE_3: 'H264'
+         TYPE_4: 'H265'
+         TYPE_5: 'H264'
+         TYPE_6: 'H265'
+         TYPE_7: 'MP4'
+         TYPE_8: 'MP4'
+         TYPE_9: 'MP4'
+         TYPE_10: 'MP4'
+         TYPE_11: 'MP4'
+         TYPE_12: 'MP4'
+         TYPE_13: 'MP4'
+         TYPE_14: 'MP4'
+         TYPE_15: 'MP4'
+
       volumes:
          - streams_data:/app
       networks:

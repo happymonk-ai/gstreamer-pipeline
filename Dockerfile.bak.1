@@ -1,0 +1,32 @@
+FROM ubuntu:22.04
+RUN mkdir /app
+WORKDIR /app
+RUN apt-get update && apt-get install -y tzdata
+RUN apt-get update -yqq && apt-get install -yqq --no-install-recommends \
+    apt-transport-https \
+    build-essential \
+    apt-utils \
+    libssl-dev \
+    pkg-config \
+    libgstrtspserver-1.0-dev \
+    gstreamer1.0-rtsp \
+    vim \
+    git \
+    cmake \
+    gcc \
+    clang
+RUN apt-get install -yqq libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+#RUN apt-get update && apt-get install -y build-essential pkg-config libgstreamer1.0-0 gstreamer1.0-dev gstreamer1.0-tools gstreamer1.0-doc gstreamer1.0-plugins-base gstreamer1.0-plugins-good gtreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav streamer1.0-doc gstreamer1.0-tools gstreamer1.0
+RUN apt-get install -y gstreamer-1.0 gstreamer1.0-dev
+RUN apt-get install -y git autoconf automake libtool
+RUN apt-get install -y python3-gi python3-gst-1.0 libgirepository1.0-dev libcairo2-dev gir1.2-gstreamer-1.0 gir1.2-gtk-3.0 python3-pip
+RUN pip install --upgrade wheel pip setuptools
+COPY . .
+RUN pip uninstall pycairo
+RUN pip install -r requirements.txt
+RUN pip install pycairo PyGObject
+RUN ls -a && pwd
+ENV PORT=8554
+EXPOSE 8554/tcp
+#CMD [ "python3", "hls.py" ]
+CMD [ "./full_code/full_pipeline" ]

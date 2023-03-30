@@ -1,0 +1,25 @@
+# Install the below libraries first separately
+
+# conda config --add channels conda-forge
+# conda config --set channel_priority strict
+
+# conda install gstreamer
+# conda install gst-plugins-bad
+# conda install gst-plugins-good
+# conda install gst-plugins-ugly
+# conda install gst-plugins-base
+# conda install gst-libav
+
+
+# sudo apt-get update
+# sudo apt-get install python3-gi
+# sudo apt-get install libgirepository1.0-dev
+# sudo apt-get install libcairo2-dev gir1.2-gstreamer-1.0
+# sudo apt install python3-gi-cairo gir1.2-gtk-3.0
+# sudo apt install gcc pkg-config python3-dev
+
+# Install with requirements.txt
+
+pycairo==1.23.0
+PyGObject==3.42.2
+python-dotenv==0.21.0
