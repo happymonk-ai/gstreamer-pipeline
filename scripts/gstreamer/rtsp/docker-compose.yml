@@ -1,0 +1,10 @@
+version: '3'
+services:
+  rtsp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rtsp-server
+    restart: always
+    ports:
+      - '8554:8554'
